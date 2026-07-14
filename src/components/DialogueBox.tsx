@@ -1,4 +1,5 @@
-import { Handle, Position } from "reactflow";
+import { Handle, Position, useUpdateNodeInternals } from "reactflow";
+import { useEffect, useRef, useState } from "react";
 import type { DialogueBox } from "../types/dialogue";
 import { Character } from "../types/character";
 import { useGraphStore } from "../store/graphStore";
@@ -6,12 +7,14 @@ import { useGraphStore } from "../store/graphStore";
 interface Props {
   data: { box: DialogueBox };
   selected: boolean;
+  id: string;
 }
 
-export default function dialogueBox({data, selected} : Props) {
+export default function dialogueBox({data, selected, id} : Props) {
     const { box } = data;
-
-    let conflictingKey = false;
+    const updateNodeInternals = useUpdateNodeInternals();
+    const choiceRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    const [handlePositions, setHandlePositions] = useState<Record<string, number>>({});
 
     const updateBox = useGraphStore((s) => s.updateBox);
     const addChoice = useGraphStore((s) => s.addChoice);
@@ -33,17 +36,33 @@ export default function dialogueBox({data, selected} : Props) {
 
     function updateKey(key: string){
         updateBox(box.id, { key:key || undefined })
-        console.log(data);
+        console.log(useGraphStore.getState().graph.boxes[box.id]);
     }
+
+    useEffect(() => {
+    const nodeEl = choiceRefs.current[box.choices[0]?.id]?.closest(".dialogue-node") as HTMLElement | null;
+    if (!nodeEl) return;
+    const nodeTop = nodeEl.getBoundingClientRect().top;
+
+    const positions: Record<string, number> = {};
+    box.choices.forEach((choice) => {
+        const rowEl = choiceRefs.current[choice.id];
+        if (rowEl) {
+        const rowRect = rowEl.getBoundingClientRect();
+        positions[choice.id] = rowRect.top - nodeTop + rowRect.height / 2;
+        }
+    });
+    setHandlePositions(positions);
+    updateNodeInternals(id); 
+    }, [box.choices, box.text, id, updateNodeInternals]);
 
     return (
         <div className={`dialogue-node ${selected ? "selected" : ""}`}>
-            <input 
-            type="text"
-            value={box.key ?? ""}
-            placeholder="Current Key..."   
-            onChange={(e) => updateKey(e.target.value)}
-            className="text-input nodrag"
+            <Handle
+                type="target"
+                position={Position.Left}
+                id={`${box.id}-default`}
+                isConnectable={false}
             />
             <div className="dialogue-node-header">
                <select
@@ -60,6 +79,13 @@ export default function dialogueBox({data, selected} : Props) {
                         </option>
                     ))}
                 </select>
+                <input 
+                type="text"
+                value={box.key ?? ""}
+                placeholder="current key..."   
+                onChange={(e) => updateKey(e.target.value)}
+                className="text-input nodrag key-choice"
+                />
                 <button className="delete-btn" onClick={() => deleteBox(box.id)} title="Delete box">
                     ✕
                 </button>
@@ -69,7 +95,7 @@ export default function dialogueBox({data, selected} : Props) {
                     <input
                         className="custom-speaker-input nodrag"
                         value={box.customSpeakerName ?? ""}
-                        placeholder="Enter name..."
+                        placeholder="enter name..."
                         onChange={(e) => updateBox(box.id, { customSpeakerName: e.target.value })}
                     />
                 )}
@@ -77,29 +103,40 @@ export default function dialogueBox({data, selected} : Props) {
                 className="text-input nodrag"
                 value={box.text}
                 onChange={(e) => updateBox(box.id, { text: e.target.value })}
-                placeholder="Dialogue text..."
+                placeholder="dialogue text..."
                 rows={3}
             />
 
             <div className="choices-list">
-                {box.choices.map((choice) => (
-                <div key={choice.id} className="choice-row">
-                    <input
-                    className="choice-prompt nodrag"
-                    value={choice.prompt}
-                    placeholder="(silent / auto)"
-                    onChange={(e) => updateChoice(box.id, choice.id, { prompt: e.target.value })}
-                    />
-                    <input
-                    className="choice-next nodrag"
-                    value={typeof choice.next === "string" ? choice.next : "[condition]"}
-                    placeholder="Box Key..."
-                    onChange={(e) => updateChoice(box.id, choice.id, { next: e.target.value })}
-                    />
-                    <button className="delete-btn small" onClick={() => deleteChoice(box.id, choice.id)}>
-                    ✕
-                    </button>
-                </div>
+                {box.choices.map((choice) => (   
+
+                    <div 
+                        key={choice.id}
+                        className="choice-row"
+                        ref={(el) => { choiceRefs.current[choice.id] = el; }}>
+                        <input
+                            className="choice-prompt nodrag"
+                            value={choice.prompt}
+                            placeholder="prompt..."
+                            onChange={(e) => updateChoice(box.id, choice.id, { prompt: e.target.value })}
+                        />
+                        <input
+                            className="choice-next nodrag"
+                            value={typeof choice.next === "string" ? choice.next : "[condition]"}
+                            placeholder="box key..."
+                            onChange={(e) => updateChoice(box.id, choice.id, { next: e.target.value })}
+                        />
+                        <button className="delete-btn small" onClick={() => deleteChoice(box.id, choice.id)}>
+                        ✕
+                        </button>
+                        <Handle
+                            type="source"
+                            position={Position.Right}
+                            id={`${box.id}-${choice.id}`}
+                            isConnectable={false}
+                            style={{ top: handlePositions[choice.id] ?? 0 }}
+                        />
+                    </div>
                 ))}
                 <button className="add-choice-btn" onClick={() => addChoice(box.id)}>
                 + choice
@@ -110,9 +147,16 @@ export default function dialogueBox({data, selected} : Props) {
                 <label>default next:</label>
                 <input
                 value={box.defaultNext ?? ""}
-                placeholder="Box Key..."
+                placeholder="box key..."
                 onChange={(e) => updateBox(box.id, { defaultNext: e.target.value || null })}
                 className="text-input default-text nodrag"
+                />
+                <Handle
+                    type="source"
+                    position={Position.Right}
+                    id={`${box.id}-default`}
+                    isConnectable={false}
+                    style={{position:"relative",right:"-210%",top:"-180%"}}
                 />
             </div>
 

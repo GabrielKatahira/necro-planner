@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { DialogueGraph, DialogueBox, Choice } from "../types/dialogue";
 import { starterGraph } from "../data/starterGraph";
 import { saveGraph,loadGraph } from "./persist";
+import { Character } from "../types/character";
 
 interface GraphStore {
   graph: DialogueGraph;
@@ -11,6 +12,9 @@ interface GraphStore {
   deleteBox: (id: string) => void;
   moveBox: (id: string, position: { x: number; y: number }) => void;
 
+  resolveKeyToId: (key: string, graph: DialogueGraph) => string | null;
+  resolveIdToKey: (id: string | null, graph: DialogueGraph) => string;
+
   addChoice: (boxId: string) => void;
   updateChoice: (boxId: string, choiceId: string, patch: Partial<Choice>) => void;
   deleteChoice: (boxId: string, choiceId: string) => void;
@@ -18,8 +22,7 @@ interface GraphStore {
   setStartBox: (id: string) => void;
 }
 
-let idCounter = 100;
-const nextId = (prefix: string) => `${prefix}_${idCounter++}`;
+const nextId = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
 
 export const useGraphStore = create<GraphStore>((set) => ({
   graph: loadGraph() ?? starterGraph,
@@ -34,7 +37,7 @@ export const useGraphStore = create<GraphStore>((set) => ({
           [id]: {
             id,
             key: "",
-            speaker: null,
+            speaker: Character.NARRATOR,
             text: "",
             choices: [],
             defaultNext: null,
@@ -80,6 +83,17 @@ export const useGraphStore = create<GraphStore>((set) => ({
         },
       },
     })),
+
+  resolveKeyToId: (key, graph) => {
+    if (!key) return null;
+    const match = Object.values(graph.boxes).find((b) => b.key === key);
+    return match ? match.id : null;
+  },
+
+  resolveIdToKey: (id, graph) => {
+    if (!id) return "";
+    return graph.boxes[id]?.key ?? "";
+  },
 
   addChoice: (boxId) =>
     set((state) => {
