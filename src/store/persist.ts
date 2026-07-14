@@ -15,3 +15,28 @@ export function loadGraph(): DialogueGraph | null {
     return null; 
   }
 }
+
+export function exportGraphAsFile(graph: DialogueGraph) {
+  const blob = new Blob([JSON.stringify(graph, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `dialogue-graph-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export function importGraphFromFile(file: File): Promise<DialogueGraph> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        resolve(JSON.parse(reader.result as string) as DialogueGraph);
+      } catch (e) {
+        reject(e);
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+}
