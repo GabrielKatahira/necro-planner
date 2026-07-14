@@ -35,7 +35,7 @@ export default function conditionBox({data, selected, id} : Props) {
                 value={box.key ?? ""}
                 placeholder="current key..."   
                 onChange={(e) => updateKey(e.target.value)}
-                className="text-input nodrag"
+                className="text-input nodrag key-text"
                 />
                 <button className="delete-btn" onClick={() => deleteBox(box.id)} title="Delete box">
                     ✕
@@ -68,7 +68,7 @@ export default function conditionBox({data, selected, id} : Props) {
                             onChange={(e) => updateEvaluation(box.id, evaluation.id, { value: e.target.value })}
                         />
                         <input
-                            className="text-input nodrag"
+                            className="text-input eval-fallback nodrag"
                             value={evaluation.next}
                             placeholder="box key..."
                             onChange={(e) => updateEvaluation(box.id, evaluation.id, { next: e.target.value })}

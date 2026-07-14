@@ -63,7 +63,7 @@ export default function dialogueBox({data, selected, id} : Props) {
                 value={box.key ?? ""}
                 placeholder="current key..."   
                 onChange={(e) => updateKey(e.target.value)}
-                className="text-input nodrag key-choice"
+                className="text-input nodrag key-choice key-text"
                 />
                 <button className="delete-btn" onClick={() => deleteBox(box.id)} title="Delete box">
                     ✕
