@@ -4,11 +4,12 @@
 body{
   padding: 0;
   margin: 0;
-  background-color: #222;
+  background-color: #111;
   font-family: "Yomogi",cursive;
 }
-button{
+button, textarea, select, input{
   font-family: inherit;
+  color: inherit;
 }
 
 html, body, #root {
@@ -19,7 +20,7 @@ html, body, #root {
 .app-root {
   width: 100vw;
   height: 100vh;
-  background: #1a1a1e;
+  background: #111;
 }
 
 .graph-canvas-wrapper {
@@ -48,4 +49,106 @@ html, body, #root {
 
 .toolbar button:hover {
   background: #111111;
+}
+
+.dialogue-node {
+  width: 370px;
+  background: linear-gradient(0deg,rgba(15, 15, 15, 1) 0%, rgba(21, 16, 23, 1) 100%);
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid #2b1a33;
+  color: #fff;
+}
+
+.dialogue-node.selected {
+  border-color: #712594;
+}
+
+.dialogue-node-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.speaker-choice {
+  width: 100%;
+  border-radius: 4px;
+  outline: none;
+  background-color: #1b1a1b;
+  border: 1px solid #29252c;
+  cursor: pointer;
+}
+
+.delete-btn {
+  background: none;
+  outline: none;
+  border: none;
+  cursor: pointer;
+}
+.custom-speaker-input {
+  background-color: #1b1a1b;
+  border: 1px solid #29252c;
+  outline: none;
+  width: 100%;
+  border-radius: 4px;
+  margin-bottom: 5px;
+}
+
+.text-input {
+  background-color: #1b1a1b;
+  border: 1px solid #29252c;
+  outline: none;
+  width: 100%;
+  resize: none;
+  border-radius: 4px;
+  font-size: .7em;
+  margin-bottom: .3em;
+}
+
+.add-choice-btn {
+  background-color: #2b1a33;
+  outline: none;
+  border: none;
+  width: 100%;
+  border-radius: 6px;
+}
+
+.choices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.choice-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.choice-prompt {
+  flex: 1.4;
+  background-color: #1b1a1b;
+  border: 1px solid #29252c;
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 11px;
+  min-width: 0;
+}
+
+.choice-next {
+  flex: 1;
+  background-color: #1b1a1b;
+  border: 1px solid #29252c;
+  border-radius: 4px;
+  color: #8fd19e;
+  padding: 4px;
+  font-size: 11px;
+  min-width: 0;
+}
+
+.default-next-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
 }

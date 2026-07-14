@@ -93,9 +93,6 @@ export default function GraphCanvas() {
         nodeTypes={nodeTypes}
         fitView
       >
-        <Background />
-        <Controls />
-        <MiniMap />
       </ReactFlow>
     </div>
   );

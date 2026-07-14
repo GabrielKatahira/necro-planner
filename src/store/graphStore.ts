@@ -33,8 +33,9 @@ export const useGraphStore = create<GraphStore>((set) => ({
           ...state.graph.boxes,
           [id]: {
             id,
+            key: "",
             speaker: null,
-            text: "New box",
+            text: "",
             choices: [],
             defaultNext: null,
             position,

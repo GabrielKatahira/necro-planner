@@ -7,8 +7,8 @@ export interface Condition {
   variable: typeof GameStateVar;
   evaluator: Evaluator;
   value: number;
-  ifTrue: string; // box id
-  ifFalse: string; // box id
+  ifTrue: string; 
+  ifFalse: string;
 }
 
 export interface Choice {
@@ -19,6 +19,7 @@ export interface Choice {
 
 export interface DialogueBox {
   id: string;
+  key: string;
   speaker: CharacterDef | null;
   customSpeakerName?: string | null;
   text: string;
