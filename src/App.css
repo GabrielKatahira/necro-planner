@@ -54,6 +54,31 @@ html, body, #root {
   background: #111111;
 }
 
+.jsonbar {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+.jsonbar button {
+  background: #2f2f30;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+  margin-bottom: .3vh;
+}
+
+.jsonbar button:hover {
+  background: #111111;
+}
+
 .box-node {
   width: 370px;
   background: linear-gradient(0deg,rgba(15, 15, 15, 1) 0%, rgba(21, 16, 23, 1) 100%);
