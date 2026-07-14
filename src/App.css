@@ -164,6 +164,14 @@ html, body, #root {
   grid-template-columns: 1fr 1fr;
 }
 
+.default-text {
+  color: #e9b045;
+}
+
+.key-text {
+  color: #598ff3;
+}
+
 .react-flow__handle {
   opacity: 0;
   pointer-events: none;
@@ -191,4 +199,7 @@ html, body, #root {
 .eval-select {
   width: 30%;
   margin: 0 5px;
+}
+.eval-fallback {
+  color: #8fd19e;
 }
