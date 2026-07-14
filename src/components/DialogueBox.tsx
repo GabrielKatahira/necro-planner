@@ -12,11 +12,8 @@ interface Props {
 
 export default function dialogueBox({data, selected, id} : Props) {
     const { box } = data;
-    const updateNodeInternals = useUpdateNodeInternals();
-    const choiceRefs = useRef<Record<string, HTMLDivElement | null>>({});
-    const [handlePositions, setHandlePositions] = useState<Record<string, number>>({});
 
-    const updateBox = useGraphStore((s) => s.updateBox);
+    const updateBox = useGraphStore((s) => s.updateDialogueBox);
     const addChoice = useGraphStore((s) => s.addChoice);
     const updateChoice = useGraphStore((s) => s.updateChoice);
     const deleteChoice = useGraphStore((s) => s.deleteChoice);
@@ -36,28 +33,10 @@ export default function dialogueBox({data, selected, id} : Props) {
 
     function updateKey(key: string){
         updateBox(box.id, { key:key || undefined })
-        console.log(useGraphStore.getState().graph.boxes[box.id]);
     }
 
-    useEffect(() => {
-    const nodeEl = choiceRefs.current[box.choices[0]?.id]?.closest(".dialogue-node") as HTMLElement | null;
-    if (!nodeEl) return;
-    const nodeTop = nodeEl.getBoundingClientRect().top;
-
-    const positions: Record<string, number> = {};
-    box.choices.forEach((choice) => {
-        const rowEl = choiceRefs.current[choice.id];
-        if (rowEl) {
-        const rowRect = rowEl.getBoundingClientRect();
-        positions[choice.id] = rowRect.top - nodeTop + rowRect.height / 2;
-        }
-    });
-    setHandlePositions(positions);
-    updateNodeInternals(id); 
-    }, [box.choices, box.text, id, updateNodeInternals]);
-
     return (
-        <div className={`dialogue-node ${selected ? "selected" : ""}`}>
+        <div className={`box-node ${selected ? "selected" : ""}`}>
             <Handle
                 type="target"
                 position={Position.Left}
@@ -71,7 +50,7 @@ export default function dialogueBox({data, selected, id} : Props) {
                         const found = Object.values(Character).find((c) => c.id === e.target.value);
                         updateBox(box.id, { speaker: found ?? null });
                     }}
-                    className="speaker-choice"
+                    className="dropdown-select"
                 >
                     {Object.values(Character).map((c) => (
                         <option key={c.id} value={c.id}>
@@ -112,8 +91,7 @@ export default function dialogueBox({data, selected, id} : Props) {
 
                     <div 
                         key={choice.id}
-                        className="choice-row"
-                        ref={(el) => { choiceRefs.current[choice.id] = el; }}>
+                        className="choice-row">
                         <input
                             className="choice-prompt nodrag"
                             value={choice.prompt}
@@ -134,11 +112,11 @@ export default function dialogueBox({data, selected, id} : Props) {
                             position={Position.Right}
                             id={`${box.id}-${choice.id}`}
                             isConnectable={false}
-                            style={{ top: handlePositions[choice.id] ?? 0 }}
+                            style={{top: "50%", right: -8, transform: "translateY(-50%)"}}
                         />
                     </div>
                 ))}
-                <button className="add-choice-btn" onClick={() => addChoice(box.id)}>
+                <button className="add-item-btn" onClick={() => addChoice(box.id)}>
                 + choice
                 </button>
             </div>

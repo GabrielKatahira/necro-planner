@@ -1,25 +1,27 @@
-import { GameStateVar } from "./gamestate";
+
 import type { CharacterDef } from "./character";
 
-export type Evaluator = "==" | "!=" | ">" | "<" | ">=" | "<=";
+export const EVALUATORS = [
+  "==",
+  "!=",
+  ">",
+  "<",
+  ">=",
+  "<=",
+] as const;
 
-export interface Condition {
-  variable: typeof GameStateVar;
-  evaluator: Evaluator;
-  value: number;
-  ifTrue: string; 
-  ifFalse: string;
-}
+export type Evaluator = typeof EVALUATORS[number];
 
 export interface Choice {
   id: string;
   prompt: string; 
-  next: string | Condition;
+  next: string;
 }
 
 export interface DialogueBox {
   id: string;
   key: string;
+  kind: "dialogue";
   speaker: CharacterDef | null;
   customSpeakerName?: string | null;
   text: string;
@@ -29,6 +31,25 @@ export interface DialogueBox {
 }
 
 export interface DialogueGraph {
-  boxes: Record<string, DialogueBox>;
+  boxes: Record<string, GraphNode>;
   startBoxId: string | null;
 }
+
+export interface ConditionEvaluation {
+  id: string;
+  variable: string;
+  evaluator: Evaluator;
+  value: string;
+  next: string;
+}
+
+export interface ConditionBox {
+  id: string;
+  key: string;
+  kind: "condition";
+  evaluations: ConditionEvaluation[];
+  fallback: string;
+  position: { x: number; y: number };
+}
+
+export type GraphNode = DialogueBox | ConditionBox
