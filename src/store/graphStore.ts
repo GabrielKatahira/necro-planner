@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { DialogueGraph, DialogueBox, Choice } from "../types/dialogue";
+import type { DialogueGraph, DialogueBox, Choice, ConditionBox, GraphNode, ConditionEvaluation } from "../types/dialogue";
 import { starterGraph } from "../data/starterGraph";
 import { saveGraph,loadGraph } from "./persist";
 import { Character } from "../types/character";
@@ -7,17 +7,25 @@ import { Character } from "../types/character";
 interface GraphStore {
   graph: DialogueGraph;
 
-  addBox: (position: { x: number; y: number }) => string;
-  updateBox: (id: string, patch: Partial<DialogueBox>) => void;
+  addDialogueBox: (position: { x: number; y: number }) => string;
+  updateDialogueBox: (id: string, patch: Partial<DialogueBox>) => void;
+  
+  addConditionBox: (position: { x: number; y: number }) => string;
+  updateConditionBox: (id: string, patch: Partial<ConditionBox>) => void;
+
   deleteBox: (id: string) => void;
   moveBox: (id: string, position: { x: number; y: number }) => void;
-
+  
   resolveKeyToId: (key: string, graph: DialogueGraph) => string | null;
   resolveIdToKey: (id: string | null, graph: DialogueGraph) => string;
 
   addChoice: (boxId: string) => void;
   updateChoice: (boxId: string, choiceId: string, patch: Partial<Choice>) => void;
   deleteChoice: (boxId: string, choiceId: string) => void;
+
+  addEvaluation: (boxId: string) => void;
+  updateEvaluation: (boxId: string, evaluationId: string, patch: Partial<ConditionEvaluation>) => void;
+  deleteEvaluation: (boxId: string, evaluationId: string) => void;
 
   setStartBox: (id: string) => void;
 }
@@ -27,7 +35,7 @@ const nextId = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
 export const useGraphStore = create<GraphStore>((set) => ({
   graph: loadGraph() ?? starterGraph,
 
-  addBox: (position) => {
+  addDialogueBox: (position) => {
     const id = nextId("box");
     set((state) => ({
       graph: {
@@ -38,24 +46,58 @@ export const useGraphStore = create<GraphStore>((set) => ({
             id,
             key: "",
             speaker: Character.NARRATOR,
+            kind:"dialogue",
             text: "",
             choices: [],
             defaultNext: null,
             position,
-          },
+          } satisfies DialogueBox,
         },
       },
     }));
     return id;
   },
 
-  updateBox: (id, patch) =>
+  updateDialogueBox: (id, patch) =>
     set((state) => ({
       graph: {
         ...state.graph,
         boxes: {
           ...state.graph.boxes,
-          [id]: { ...state.graph.boxes[id], ...patch },
+          [id]: { ...state.graph.boxes[id], ...patch } as DialogueBox,
+        },
+      },
+    })),
+
+
+  addConditionBox: (position) => {
+    const id = nextId("box");
+    set((state) => ({
+      graph: {
+        ...state.graph,
+        boxes: {
+          ...state.graph.boxes,
+          [id]: {
+            id,
+            key: "",
+            kind:"condition",
+            evaluations:[],
+            fallback:"",
+            position
+          } satisfies ConditionBox,
+        },
+      },
+    }));
+    return id;
+  },
+
+  updateConditionBox: (id, patch) =>
+    set((state) => ({
+      graph: {
+        ...state.graph,
+        boxes: {
+          ...state.graph.boxes,
+          [id]: { ...state.graph.boxes[id], ...patch } as ConditionBox,
         },
       },
     })),
@@ -84,6 +126,7 @@ export const useGraphStore = create<GraphStore>((set) => ({
       },
     })),
 
+
   resolveKeyToId: (key, graph) => {
     if (!key) return null;
     const match = Object.values(graph.boxes).find((b) => b.key === key);
@@ -98,7 +141,7 @@ export const useGraphStore = create<GraphStore>((set) => ({
   addChoice: (boxId) =>
     set((state) => {
       const box = state.graph.boxes[boxId];
-      if (!box) return state;
+      if (!box || box.kind != "dialogue") return state;
       const newChoice: Choice = {
         id: nextId("choice"),
         prompt: "",
@@ -118,7 +161,7 @@ export const useGraphStore = create<GraphStore>((set) => ({
   updateChoice: (boxId, choiceId, patch) =>
     set((state) => {
       const box = state.graph.boxes[boxId];
-      if (!box) return state;
+      if (!box || box.kind != "dialogue") return state;
       return {
         graph: {
           ...state.graph,
@@ -136,13 +179,68 @@ export const useGraphStore = create<GraphStore>((set) => ({
   deleteChoice: (boxId, choiceId) =>
     set((state) => {
       const box = state.graph.boxes[boxId];
-      if (!box) return state;
+      if (!box || box.kind != "dialogue") return state;
       return {
         graph: {
           ...state.graph,
           boxes: {
             ...state.graph.boxes,
             [boxId]: { ...box, choices: box.choices.filter((c) => c.id !== choiceId) },
+          },
+        },
+      };
+    }),
+
+  addEvaluation: (boxId) =>
+    set((state) => {
+      const box = state.graph.boxes[boxId];
+      if (!box || box.kind != "condition") return state;
+      const newEvaluation: ConditionEvaluation = {
+        id: nextId("eval"),
+        variable: "",
+        evaluator: "==",
+        value:"",
+        next:""
+      }
+      return {
+        graph: {
+          ...state.graph,
+          boxes: {
+            ...state.graph.boxes,
+            [boxId]: { ...box, evaluations: [...box.evaluations, newEvaluation] },
+          },
+        },
+      };
+    }),
+
+  updateEvaluation: (boxId, evaluationId, patch) =>
+    set((state) => {
+      const box = state.graph.boxes[boxId];
+      if (!box || box.kind != "condition") return state;
+      return {
+        graph: {
+          ...state.graph,
+          boxes: {
+            ...state.graph.boxes,
+            [boxId]: {
+              ...box,
+              evaluations: box.evaluations.map((e) => (e.id === evaluationId ? { ...e, ...patch } : e)),
+            },
+          },
+        },
+      };
+    }),
+
+  deleteEvaluation: (boxId, evaluationId) =>
+    set((state) => {
+      const box = state.graph.boxes[boxId];
+      if (!box || box.kind != "condition") return state;
+      return {
+        graph: {
+          ...state.graph,
+          boxes: {
+            ...state.graph.boxes,
+            [boxId]: { ...box, evaluations: box.evaluations.filter((e) => e.id !== evaluationId) },
           },
         },
       };

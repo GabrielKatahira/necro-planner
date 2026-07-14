@@ -5,13 +5,15 @@ import "reactflow/dist/style.css";
 import { useGraphStore } from "../store/graphStore";
 import DialogueBox from "./DialogueBox";
 import type { DialogueGraph } from "../types/dialogue";
+import ConditionBox from "./ConditionBox";
 
-const nodeTypes = { dialogueBox: DialogueBox };
+const nodeTypes = { dialogueBox: DialogueBox, conditionBox : ConditionBox};
 
 export default function GraphCanvas() {
   const graph = useGraphStore((s) => s.graph);
   const moveBox = useGraphStore((s) => s.moveBox);
-  const addBox = useGraphStore((s) => s.addBox);
+  const addDialogueBox = useGraphStore((s) => s.addDialogueBox);
+  const addConditionBox = useGraphStore((s) => s.addConditionBox);
 
   function findBoxByKey(key: string, graph: DialogueGraph) {
     return Object.values(graph.boxes).find((b) => b.key === key) ?? null;
@@ -21,7 +23,7 @@ export default function GraphCanvas() {
     () =>
       Object.values(graph.boxes).map((box) => ({
         id: box.id,
-        type: "dialogueBox",
+        type: box.kind+"Box",
         position: box.position,
         data: { box },
       })),
@@ -31,49 +33,61 @@ export default function GraphCanvas() {
   const edges: Edge[] = useMemo(() => {
   const list: Edge[] = [];
   Object.values(graph.boxes).forEach((box) => {
-      box.choices.forEach((choice) => {
-        if (typeof choice.next === "string" && choice.next) {
-          const target = findBoxByKey(choice.next, graph);
+      if(box.kind=== "dialogue"){
+        box.choices.forEach((choice) => {
+          if (typeof choice.next === "string" && choice.next) {
+            const target = findBoxByKey(choice.next, graph);
+            if (target) {
+              list.push({
+                id: `${box.id}-${choice.id}`,
+                source: box.id,
+                sourceHandle: `${box.id}-${choice.id}`,
+                target: target.id,
+              });
+            }
+          }
+        });
+
+        if (box.defaultNext) {
+          const target = findBoxByKey(box.defaultNext, graph);
           if (target) {
             list.push({
-              id: `${box.id}-${choice.id}`,
+              id: `${box.id}-default`,
               source: box.id,
-              sourceHandle: `${box.id}-${choice.id}`,
+              sourceHandle: `${box.id}-default`,
               target: target.id,
-            });
-          }
-        } else if (typeof choice.next === "object") {
-          const trueTarget = findBoxByKey(choice.next.ifTrue, graph);
-          if (trueTarget) {
-            list.push({
-              id: `${box.id}-${choice.id}-true`,
-              source: box.id,
-              target: trueTarget.id,
-              label: `${choice.prompt || "(auto)"} [true]`,
-            });
-          }
-          const falseTarget = findBoxByKey(choice.next.ifFalse, graph);
-          if (falseTarget) {
-            list.push({
-              id: `${box.id}-${choice.id}-false`,
-              source: box.id,
-              target: falseTarget.id,
-              label: `${choice.prompt || "(auto)"} [false]`,
+              style: { strokeDasharray: "4 4"},
             });
           }
         }
-      });
+      }
 
-      if (box.defaultNext) {
-        const target = findBoxByKey(box.defaultNext, graph);
-        if (target) {
-          list.push({
-            id: `${box.id}-default`,
-            source: box.id,
-            sourceHandle: `${box.id}-default`,
-            target: target.id,
-            style: { strokeDasharray: "4 4"},
-          });
+      if (box.kind === "condition") {
+        box.evaluations.forEach((evaluation) => {
+          if (typeof evaluation.next === "string" && evaluation.next) {
+            const target = findBoxByKey(evaluation.next, graph);
+            if(target) {
+              list.push({
+                id: `${box.id}-${evaluation.id}`,
+                source: box.id,
+                sourceHandle: `${box.id}-${evaluation.id}`,
+                target: target.id
+              })
+            }
+          }
+        })
+
+        if(box.fallback) {
+          const target = findBoxByKey(box.fallback, graph);
+          if (target) {
+            list.push({
+              id: `${box.id}-fallback`,
+              source: box.id,
+              sourceHandle: `${box.id}-fallback`,
+              target: target.id,
+              style: { strokeDasharray: "4 4"},
+            });
+          }
         }
       }
     });
@@ -91,14 +105,19 @@ export default function GraphCanvas() {
     [moveBox]
   );
 
-  const handleAddBox = () => {
-    addBox({ x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 });
+  const handleAddDialogueBox = () => {
+    addDialogueBox({ x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 });
+  };
+
+  const handleAddConditionBox = () => {
+    addConditionBox({ x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 });
   };
 
   return (
     <div className="graph-canvas-wrapper">
       <div className="toolbar">
-        <button onClick={handleAddBox}>+ Add Box</button>
+        <button onClick={handleAddDialogueBox}>+ Add Dialogue Box</button>
+        <button onClick={handleAddConditionBox}>+ Add Condition Box</button>
       </div>
       <ReactFlow
         nodes={nodes}
