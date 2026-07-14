@@ -4,6 +4,7 @@ import type { Node, Edge, NodeChange } from "reactflow";
 import "reactflow/dist/style.css";
 import { useGraphStore } from "../store/graphStore";
 import DialogueBox from "./DialogueBox";
+import type { DialogueGraph } from "../types/dialogue";
 
 const nodeTypes = { dialogueBox: DialogueBox };
 
@@ -11,6 +12,10 @@ export default function GraphCanvas() {
   const graph = useGraphStore((s) => s.graph);
   const moveBox = useGraphStore((s) => s.moveBox);
   const addBox = useGraphStore((s) => s.addBox);
+
+  function findBoxByKey(key: string, graph: DialogueGraph) {
+    return Object.values(graph.boxes).find((b) => b.key === key) ?? null;
+  }
 
   const nodes: Node[] = useMemo(
     () =>
@@ -24,43 +29,52 @@ export default function GraphCanvas() {
   );
 
   const edges: Edge[] = useMemo(() => {
-    const list: Edge[] = [];
-    Object.values(graph.boxes).forEach((box) => {
+  const list: Edge[] = [];
+  Object.values(graph.boxes).forEach((box) => {
       box.choices.forEach((choice) => {
-        if (typeof choice.next === "string" && choice.next && graph.boxes[choice.next]) {
-          list.push({
-            id: `${box.id}-${choice.id}`,
-            source: box.id,
-            target: choice.next,
-            label: choice.prompt || "(auto)",
-          });
+        if (typeof choice.next === "string" && choice.next) {
+          const target = findBoxByKey(choice.next, graph);
+          if (target) {
+            list.push({
+              id: `${box.id}-${choice.id}`,
+              source: box.id,
+              sourceHandle: `${box.id}-${choice.id}`,
+              target: target.id,
+            });
+          }
         } else if (typeof choice.next === "object") {
-          if (graph.boxes[choice.next.ifTrue]) {
+          const trueTarget = findBoxByKey(choice.next.ifTrue, graph);
+          if (trueTarget) {
             list.push({
               id: `${box.id}-${choice.id}-true`,
               source: box.id,
-              target: choice.next.ifTrue,
+              target: trueTarget.id,
               label: `${choice.prompt || "(auto)"} [true]`,
             });
           }
-          if (graph.boxes[choice.next.ifFalse]) {
+          const falseTarget = findBoxByKey(choice.next.ifFalse, graph);
+          if (falseTarget) {
             list.push({
               id: `${box.id}-${choice.id}-false`,
               source: box.id,
-              target: choice.next.ifFalse,
+              target: falseTarget.id,
               label: `${choice.prompt || "(auto)"} [false]`,
             });
           }
         }
       });
-      if (box.defaultNext && graph.boxes[box.defaultNext]) {
-        list.push({
-          id: `${box.id}-default`,
-          source: box.id,
-          target: box.defaultNext,
-          label: "(default)",
-          style: { strokeDasharray: "4 4" },
-        });
+
+      if (box.defaultNext) {
+        const target = findBoxByKey(box.defaultNext, graph);
+        if (target) {
+          list.push({
+            id: `${box.id}-default`,
+            source: box.id,
+            sourceHandle: `${box.id}-default`,
+            target: target.id,
+            style: { strokeDasharray: "4 4"},
+          });
+        }
       }
     });
     return list;

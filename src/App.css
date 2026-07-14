@@ -78,6 +78,7 @@ html, body, #root {
   background-color: #1b1a1b;
   border: 1px solid #29252c;
   cursor: pointer;
+  height: 100%;
 }
 
 .delete-btn {
@@ -104,6 +105,12 @@ html, body, #root {
   border-radius: 4px;
   font-size: .7em;
   margin-bottom: .3em;
+}
+
+.key-choice {
+  height: 100%;
+  width: 80%;
+  margin: 0;
 }
 
 .add-choice-btn {
@@ -151,4 +158,9 @@ html, body, #root {
 .default-next-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
+}
+
+.react-flow__handle {
+  opacity: 0;
+  pointer-events: none;
 }
