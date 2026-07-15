@@ -7,6 +7,7 @@ import DialogueBox from "./DialogueBox";
 import type { DialogueGraph } from "../types/dialogue";
 import ConditionBox from "./ConditionBox";
 import { exportGraphAsFile,importGraphFromFile } from "../store/persist";
+import StarfieldBackground from "./StarfieldBackground";
 
 const nodeTypes = { dialogueBox: DialogueBox, conditionBox : ConditionBox};
 
@@ -146,6 +147,7 @@ export default function GraphCanvas() {
         nodeTypes={nodeTypes}
         fitView
       >
+        <StarfieldBackground width={4000} height={4000}/>
       </ReactFlow>
     </div>
   );
