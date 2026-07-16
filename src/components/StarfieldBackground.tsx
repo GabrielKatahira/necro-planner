@@ -1,162 +1,233 @@
 import { useEffect, useRef } from "react";
 import { useViewport } from "reactflow";
 
-interface Star{
-    x: number;
-    y: number;
-    radius: number;
-    baseOpacity: number;
-    twinkleSpeed: number;
-    twinklePhase: number;
-    driftX: number;
-    driftY: number;
+interface Star {
+  x: number;
+  y: number;
+  radius: number;
+  baseOpacity: number;
+  twinkleSpeed: number;
+  twinklePhase: number;
+  driftX: number;
+  driftY: number;
 }
 
 interface ConstellationLink {
-  a: number; 
+  a: number; // index into the owning chunk's stars array
   b: number;
-  opacity: number;
   pulseSpeed: number;
   pulsePhase: number;
 }
 
-interface Props {
-  width: number; 
-  height: number;
-  starCount?: number;
+interface Chunk {
+  key: string;
+  originX: number;
+  originY: number;
+  stars: Star[];
+  links: ConstellationLink[];
+  linkedIndices: Set<number>;
 }
 
-export default function StarfieldBackground({ width, height, starCount = 500 }: Props) {
+const CHUNK_SIZE = 1000;
+const STARS_PER_CHUNK = 40;
+const MAX_LINK_DISTANCE = 250;
+
+// --- deterministic per-chunk randomness, so revisiting a chunk reproduces the same stars ---
+
+function seededRandom(seed: number) {
+  let t = seed + 0x6d2b79f5;
+  return function () {
+    t = (t + 0x6d2b79f5) | 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function hashChunkCoord(cx: number, cy: number): number {
+  return cx * 374761393 + cy * 668265263;
+}
+
+function generateChunk(cx: number, cy: number): Chunk {
+  const rand = seededRandom(hashChunkCoord(cx, cy));
+  const originX = cx * CHUNK_SIZE;
+  const originY = cy * CHUNK_SIZE;
+
+  const stars: Star[] = [];
+  for (let i = 0; i < STARS_PER_CHUNK; i++) {
+    stars.push({
+      x: originX + rand() * CHUNK_SIZE,
+      y: originY + rand() * CHUNK_SIZE,
+      radius: rand() * 1.5 + 0.3,
+      baseOpacity: rand() * 0.5 + 0.3,
+      twinkleSpeed: rand() * 0.002 + 0.0005,
+      twinklePhase: rand() * Math.PI * 2,
+      driftX: (rand() - 0.5) * 2,
+      driftY: (rand() - 0.5) * 2,
+    });
+  }
+
+  // constellation links — chunk-local only, same star-proximity approach as before
+  const links: ConstellationLink[] = [];
+  const eligibleCount = Math.floor(STARS_PER_CHUNK * 0.5);
+  for (let i = 0; i < eligibleCount; i++) {
+    const a = Math.floor(rand() * STARS_PER_CHUNK);
+    const candidates: number[] = [];
+    for (let b = 0; b < STARS_PER_CHUNK; b++) {
+      if (b === a) continue;
+      const dx = stars[a].x - stars[b].x;
+      const dy = stars[a].y - stars[b].y;
+      if (Math.sqrt(dx * dx + dy * dy) < MAX_LINK_DISTANCE) candidates.push(b);
+    }
+    if (candidates.length > 0) {
+      const b = candidates[Math.floor(rand() * candidates.length)];
+      links.push({ a, b, pulseSpeed: rand() * 0.0008 + 0.0002, pulsePhase: rand() * Math.PI * 2 });
+    }
+  }
+
+  const linkedIndices = new Set<number>();
+  links.forEach((link) => {
+    linkedIndices.add(link.a);
+    linkedIndices.add(link.b);
+  });
+
+  return { key: `${cx},${cy}`, originX, originY, stars, links, linkedIndices };
+}
+
+function getVisibleWorldBounds(viewport: { x: number; y: number; zoom: number }, screenWidth: number, screenHeight: number) {
+  return {
+    left: -viewport.x / viewport.zoom,
+    top: -viewport.y / viewport.zoom,
+    width: screenWidth / viewport.zoom,
+    height: screenHeight / viewport.zoom,
+  };
+}
+
+function worldToScreen(worldX: number, worldY: number, viewport: { x: number; y: number; zoom: number }) {
+  return {
+    screenX: worldX * viewport.zoom + viewport.x,
+    screenY: worldY * viewport.zoom + viewport.y,
+  };
+}
+
+export default function StarfieldBackground() {
   const { x, y, zoom } = useViewport();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const starsRef = useRef<Star[]>([]);
-  const linksRef = useRef<ConstellationLink[]>([]);
-  const linkedIndicesRef = useRef<Set<number>>(new Set());
+  const chunksRef = useRef<Map<string, Chunk>>(new Map());
+  const viewportRef = useRef({ x, y, zoom });
 
+  // keep the RAF loop's view of the viewport current without restarting the loop every pan tick
   useEffect(() => {
-    const stars: Star[] = [];
-    for (let i = 0; i < starCount; i++) {
-      stars.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        radius: Math.random() * 1.5 + 0.3,
-        baseOpacity: Math.random() * 0.5 + 0.3,
-        twinkleSpeed: Math.random() * 0.002 + 0.0005,
-        twinklePhase: Math.random() * Math.PI * 2,
-        driftX: (Math.random() - 0.5) * 2,
-        driftY: (Math.random() - 0.5) * 2,
-      });
-    }
-    starsRef.current = stars;
+    viewportRef.current = { x, y, zoom };
+  }, [x, y, zoom]);
 
-    const links: ConstellationLink[] = [];
-    const maxDistance = 250;
-    const eligibleCount = Math.floor(starCount * 0.5);
+  // generate/evict chunks around the current viewport
+  useEffect(() => {
+    const bounds = getVisibleWorldBounds({ x, y, zoom }, window.innerWidth, window.innerHeight);
+    const margin = CHUNK_SIZE; // one extra ring beyond visible, so panning doesn't pop-in visibly
 
-    for (let i = 0; i < eligibleCount; i++) {
-    const a = Math.floor(Math.random() * starCount);
+    const minCx = Math.floor((bounds.left - margin) / CHUNK_SIZE);
+    const maxCx = Math.floor((bounds.left + bounds.width + margin) / CHUNK_SIZE);
+    const minCy = Math.floor((bounds.top - margin) / CHUNK_SIZE);
+    const maxCy = Math.floor((bounds.top + bounds.height + margin) / CHUNK_SIZE);
 
-    const candidates: number[] = [];
-    for (let b = 0; b < starCount; b++) {
-        if (b === a) continue;
-        const dx = stars[a].x - stars[b].x;
-        const dy = stars[a].y - stars[b].y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < maxDistance) candidates.push(b);
+    const neededKeys = new Set<string>();
+    for (let cx = minCx; cx <= maxCx; cx++) {
+      for (let cy = minCy; cy <= maxCy; cy++) {
+        const key = `${cx},${cy}`;
+        neededKeys.add(key);
+        if (!chunksRef.current.has(key)) {
+          chunksRef.current.set(key, generateChunk(cx, cy));
+        }
+      }
     }
 
-    if (candidates.length > 0) {
-        const b = candidates[Math.floor(Math.random() * candidates.length)];
-        links.push({
-        a,
-        b,
-        opacity: 0,
-        pulseSpeed: Math.random() * 0.0008 + 0.0002,
-        pulsePhase: Math.random() * Math.PI * 2,
-        });
+    for (const key of chunksRef.current.keys()) {
+      if (!neededKeys.has(key)) chunksRef.current.delete(key);
     }
-    }
-    linksRef.current = links;
+  }, [x, y, zoom]);
 
-    const linkedStarIndices = new Set<number>();
-    links.forEach((link) => {
-    linkedStarIndices.add(link.a);
-    linkedStarIndices.add(link.b);
-    });
-    linkedIndicesRef.current = linkedStarIndices;
-  }, [width, height, starCount]);
+  // canvas always matches the viewport size
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
 
+  // draw loop — runs once, forever, reading live chunk/viewport data via refs
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    canvas.width = width;
-    canvas.height = height;
-
     let rafId: number;
 
     const draw = (time: number) => {
-      ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = "white";
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const viewport = viewportRef.current;
 
+      for (const chunk of chunksRef.current.values()) {
+        // constellation lines first, so stars render on top
         ctx.strokeStyle = "white";
-        for (const link of linksRef.current) {
-            const a = starsRef.current[link.a];
-            const b = starsRef.current[link.b];
-            const pulse = Math.sin(time * link.pulseSpeed + link.pulsePhase);
-            const opacity = Math.max(0, pulse) * 0.40; // faint, only visible during "on" phase of pulse
+        for (const link of chunk.links) {
+          const a = chunk.stars[link.a];
+          const b = chunk.stars[link.b];
+          const pulse = Math.sin(time * link.pulseSpeed + link.pulsePhase);
+          const opacity = Math.max(0, pulse) * 0.4;
 
-            ctx.globalAlpha = opacity;
-            ctx.lineWidth = 0.5;
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
+          const pa = worldToScreen(a.x, a.y, viewport);
+          const pb = worldToScreen(b.x, b.y, viewport);
+
+          ctx.globalAlpha = opacity;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(pa.screenX, pa.screenY);
+          ctx.lineTo(pb.screenX, pb.screenY);
+          ctx.stroke();
         }
 
-      starsRef.current.forEach((star, index) => {
-        if (!linkedIndicesRef.current.has(index)) {
+        // stars
+        ctx.fillStyle = "white";
+        chunk.stars.forEach((star, index) => {
+          if (!chunk.linkedIndices.has(index)) {
             star.x += star.driftX;
             star.y += star.driftY;
-            if (star.x < 0 || star.x > width) star.driftX *= -1;
-            if (star.y < 0 || star.y > height) star.driftY *= -1;
-            star.x = Math.max(0, Math.min(width, star.x));
-            star.y = Math.max(0, Math.min(height, star.y));
-        }
+            if (star.x < chunk.originX || star.x > chunk.originX + CHUNK_SIZE) star.driftX *= -1;
+            if (star.y < chunk.originY || star.y > chunk.originY + CHUNK_SIZE) star.driftY *= -1;
+            star.x = Math.max(chunk.originX, Math.min(chunk.originX + CHUNK_SIZE, star.x));
+            star.y = Math.max(chunk.originY, Math.min(chunk.originY + CHUNK_SIZE, star.y));
+          }
 
-        const twinkle = Math.sin(time * star.twinkleSpeed + star.twinklePhase);
-        const opacity = star.baseOpacity + twinkle * 0.3;
+          const twinkle = Math.sin(time * star.twinkleSpeed + star.twinklePhase);
+          const opacity = star.baseOpacity + twinkle * 0.3;
+          const { screenX, screenY } = worldToScreen(star.x, star.y, viewport);
 
-        ctx.globalAlpha = Math.max(0, Math.min(1, opacity));
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-        ctx.fill();
-      })
+          ctx.globalAlpha = Math.max(0, Math.min(1, opacity));
+          ctx.beginPath();
+          ctx.arc(screenX, screenY, star.radius * viewport.zoom, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
       ctx.globalAlpha = 1;
-
       rafId = requestAnimationFrame(draw);
     };
 
     rafId = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(rafId);
-  }, [width, height]);
+  }, []);
 
   return (
-   <div
-    style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        transform: `translate(${x}px, ${y}px) scale(${zoom})`,
-        transformOrigin: "0 0", 
-        pointerEvents: "none",
-    }}
-    >
-  <div style={{ position: "absolute", top: -height / 2, left: -width / 2 }}>
-    <canvas ref={canvasRef} width={width} height={height} />
-  </div>
-</div>
+    <canvas
+      ref={canvasRef}
+      style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}
+    />
   );
 }
