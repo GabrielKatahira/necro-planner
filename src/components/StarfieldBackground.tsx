@@ -29,10 +29,8 @@ interface Chunk {
 }
 
 const CHUNK_SIZE = 1000;
-const STARS_PER_CHUNK = 40;
+const STARS_PER_CHUNK = 60;
 const MAX_LINK_DISTANCE = 250;
-
-// --- deterministic per-chunk randomness, so revisiting a chunk reproduces the same stars ---
 
 function seededRandom(seed: number) {
   let t = seed + 0x6d2b79f5;
@@ -67,9 +65,8 @@ function generateChunk(cx: number, cy: number): Chunk {
     });
   }
 
-  // constellation links — chunk-local only, same star-proximity approach as before
   const links: ConstellationLink[] = [];
-  const eligibleCount = Math.floor(STARS_PER_CHUNK * 0.5);
+  const eligibleCount = Math.floor(STARS_PER_CHUNK * 0.3);
   for (let i = 0; i < eligibleCount; i++) {
     const a = Math.floor(rand() * STARS_PER_CHUNK);
     const candidates: number[] = [];
@@ -116,15 +113,14 @@ export default function StarfieldBackground() {
   const chunksRef = useRef<Map<string, Chunk>>(new Map());
   const viewportRef = useRef({ x, y, zoom });
 
-  // keep the RAF loop's view of the viewport current without restarting the loop every pan tick
   useEffect(() => {
     viewportRef.current = { x, y, zoom };
   }, [x, y, zoom]);
 
-  // generate/evict chunks around the current viewport
+
   useEffect(() => {
     const bounds = getVisibleWorldBounds({ x, y, zoom }, window.innerWidth, window.innerHeight);
-    const margin = CHUNK_SIZE; // one extra ring beyond visible, so panning doesn't pop-in visibly
+    const margin = CHUNK_SIZE;
 
     const minCx = Math.floor((bounds.left - margin) / CHUNK_SIZE);
     const maxCx = Math.floor((bounds.left + bounds.width + margin) / CHUNK_SIZE);
@@ -180,7 +176,7 @@ export default function StarfieldBackground() {
           const a = chunk.stars[link.a];
           const b = chunk.stars[link.b];
           const pulse = Math.sin(time * link.pulseSpeed + link.pulsePhase);
-          const opacity = Math.max(0, pulse) * 0.4;
+          const opacity = Math.max(0, pulse) * 0.1;
 
           const pa = worldToScreen(a.x, a.y, viewport);
           const pb = worldToScreen(b.x, b.y, viewport);
