@@ -43,6 +43,13 @@ export default function dialogueBox({data, selected, id} : Props) {
                 id={`${box.id}-default`}
                 isConnectable={false}
             />
+            {box.speaker?.portrait && (
+                <img 
+                src={box.speaker.portrait} 
+                className="dialogue-box-portrait"
+                key={box.speaker.portrait}
+                />
+            )}
             <div className="dialogue-node-header">
                <select
                     value={box.speaker?.id ?? ""}

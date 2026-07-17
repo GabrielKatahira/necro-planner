@@ -228,3 +228,10 @@ html, body, #root {
 .eval-fallback {
   color: #8fd19e;
 }
+
+.dialogue-box-portrait {
+  position: absolute;
+  width: 150px;
+  transform: translate(150%,-110%);
+  opacity:.5;
+}
