@@ -231,7 +231,7 @@ html, body, #root {
 
 .dialogue-box-portrait {
   position: absolute;
-  width: 150px;
-  transform: translate(150%,-110%);
+  width: 70px;
+  transform: translate(400%,-120%);
   opacity:.5;
 }

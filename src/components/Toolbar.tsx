@@ -9,6 +9,7 @@ export default function Toolbar() {
   const addConditionBox = useGraphStore((s) => s.addConditionBox);
   const graph = useGraphStore((s) => s.graph);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const resetGraph = useGraphStore((s) => s.resetGraph);
 
   const centerOfScreen = () =>
     screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
@@ -34,6 +35,11 @@ export default function Toolbar() {
           }}
         />
         <button onClick={() => fileInputRef.current?.click()}>Import JSON</button>
+        <button onClick={() => {
+          if (confirm("Clear the current graph? Export first if you want to keep it.")) {
+            resetGraph(centerOfScreen());
+          }
+        }}>Reset Graph</button>
       </div>
     </>
   );

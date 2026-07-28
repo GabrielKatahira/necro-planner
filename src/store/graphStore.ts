@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import type { DialogueGraph, DialogueBox, Choice, ConditionBox, GraphNode, ConditionEvaluation } from "../types/dialogue";
+import type { DialogueGraph, DialogueBox, Choice, ConditionBox, ConditionEvaluation } from "../types/dialogue";
 import { starterGraph } from "../data/starterGraph";
-import { saveGraph,loadGraph } from "./persist";
+import { loadGraph, saveGraphDebounced } from "./persist";
 import { Character } from "../types/character";
 
 interface GraphStore {
@@ -28,6 +28,7 @@ interface GraphStore {
   deleteEvaluation: (boxId: string, evaluationId: string) => void;
 
   setStartBox: (id: string) => void;
+  resetGraph: (position: { x: number; y: number }) => void;
 }
 
 const nextId = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
@@ -251,8 +252,35 @@ export const useGraphStore = create<GraphStore>((set) => ({
       graph: { ...state.graph, startBoxId: id },
     })),
     
+  resetGraph: (position) =>
+    set(() => {
+      const startKey = window.prompt("Name your starting box key:");
+      if (!startKey) {
+        return { graph: { boxes: {}, startBoxId: null } };
+      }
+
+      const id = nextId("box");
+      const startBox: DialogueBox = {
+        id,
+        key: startKey,
+        kind: "dialogue",
+        speaker: null,
+        customSpeakerName: null,
+        text: "New box",
+        choices: [],
+        defaultNext: null,
+        position
+      };
+
+      return {
+        graph: {
+          boxes: { [id]: startBox },
+          startBoxId: startBox.key,
+        },
+      };
+  }),
 }));
 
 useGraphStore.subscribe((state) => {
-  saveGraph(state.graph);
+  saveGraphDebounced(state.graph);
 });
