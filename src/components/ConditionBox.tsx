@@ -1,6 +1,7 @@
 import { Handle, Position} from "reactflow";
 import { useGraphStore } from "../store/graphStore";
 import { EVALUATORS, type ConditionBox, type Evaluator } from "../types/dialogue";
+import { useState, useEffect } from "react";
 
 interface Props {
   data: { box: ConditionBox };
@@ -17,10 +18,30 @@ export default function conditionBox({data, selected} : Props) {
     const updateEvaluation = useGraphStore((s) => s.updateEvaluation);
     const deleteEvaluation = useGraphStore((s) => s.deleteEvaluation);
     const deleteBox = useGraphStore((s) => s.deleteBox);
-    
-    function updateKey(key: string){
-        updateBox(box.id, { key:key || undefined })
-    }
+
+    const [localKey, setLocalKey] = useState(box.key ?? "");
+    const [localEvaluations, setLocalEvaluations] = useState(
+        box.evaluations.map((c) => ({ 
+            id: c.id, 
+            variable: c.variable, 
+            evaluator: typeof c.evaluator === "string" ? c.evaluator : "==" ,
+            value: typeof c.value === "number" ? c.value : "0",
+            next: typeof c.next === "string" ? c.next : ""
+        }))
+    );
+    const [localFallback, setLocalFallback] = useState(box.fallback ?? "");
+
+    useEffect(() => { setLocalKey(box.key ?? ""); }, [box.key]);
+    useEffect(() => { setLocalFallback(box.fallback); }, [box.fallback]);
+    useEffect(() => {
+        setLocalEvaluations(box.evaluations.map((c) => ({ 
+            id: c.id, 
+            variable: c.variable, 
+            evaluator: typeof c.evaluator === "string" ? c.evaluator : "==" ,
+            value: typeof c.value === "number" ? c.value : "0",
+            next: typeof c.next === "string" ? c.next : ""
+        })))
+    }, [box.evaluations]);
 
     return(
         <div className={`box-node ${selected ? "selected" : ""}`}>
@@ -33,9 +54,11 @@ export default function conditionBox({data, selected} : Props) {
             <div className="condition-header">
                 <input 
                 type="text"
-                value={box.key ?? ""}
+                defaultValue={localKey}
+                key={`key-${box.id}`}
                 placeholder="current key..."   
-                onChange={(e) => updateKey(e.target.value)}
+                onChange={(e) => setLocalKey(e.target.value)}
+                onBlur={() => updateBox(box.id, { key: localKey || undefined })}
                 className="text-input nodrag key-text"
                 />
                 <button className="delete-btn" onClick={() => deleteBox(box.id)} title="Delete box">
@@ -43,15 +66,21 @@ export default function conditionBox({data, selected} : Props) {
                 </button>
             </div>
             <div className="evaluations-list">
-                {box.evaluations.map((evaluation) => (
+                {box.evaluations.map((evaluation, index) => (
                     <div
                         key={evaluation.id} 
                         className="evaluations-row" >
                         <input
                             className="text-input nodrag"
-                            value={evaluation.variable}
+                            defaultValue={localEvaluations[index]?.variable ?? ""}
+                            key={`variable-${evaluation.id}`}
+                            onChange={(e) => {
+                                const next = [...localEvaluations];
+                                next[index] = { ...next[index], variable: e.target.value };
+                                setLocalEvaluations(next);
+                            }}
+                            onBlur={() => updateEvaluation(box.id, evaluation.id, { variable: localEvaluations[index]?.variable ?? "" })}
                             placeholder="variable..."
-                            onChange={(e) => updateEvaluation(box.id, evaluation.id, { variable: e.target.value })}
                         />
                         <select value={evaluation.evaluator}
                                 className="dropdown-select eval-select"
@@ -64,15 +93,27 @@ export default function conditionBox({data, selected} : Props) {
                         </select>
                         <input
                             className="text-input eval-value nodrag"
-                            value={evaluation.value}
+                            defaultValue={localEvaluations[index]?.value ?? ""}
+                            key={`value-${evaluation.id}`}
+                            onChange={(e) => {
+                                const next = [...localEvaluations];
+                                next[index] = { ...next[index], value: e.target.value };
+                                setLocalEvaluations(next);
+                            }}
+                            onBlur={() => updateEvaluation(box.id, evaluation.id, { value: localEvaluations[index]?.value ?? "" })}
                             placeholder="value..."
-                            onChange={(e) => updateEvaluation(box.id, evaluation.id, { value: e.target.value })}
                         />
                         <input
                             className="text-input eval-fallback nodrag"
-                            value={evaluation.next}
+                            defaultValue={localEvaluations[index]?.next ?? ""}
+                            key={`next-${evaluation.id}`}
+                            onChange={(e) => {
+                                const next = [...localEvaluations];
+                                next[index] = { ...next[index], next: e.target.value };
+                                setLocalEvaluations(next);
+                            }}
+                            onBlur={() => updateEvaluation(box.id, evaluation.id, { next: localEvaluations[index]?.next ?? "" })}
                             placeholder="box key..."
-                            onChange={(e) => updateEvaluation(box.id, evaluation.id, { next: e.target.value })}
                         />
                         <button className="delete-btn" onClick={() => deleteEvaluation(box.id,evaluation.id)} title="Delete box">
                             ✕
@@ -94,9 +135,10 @@ export default function conditionBox({data, selected} : Props) {
             <div className="default-next-row">
                 <label>fallback:</label>
                 <input
-                value={box.fallback ?? ""}
+                defaultValue={localFallback}
                 placeholder="box key..."
-                onChange={(e) => updateBox(box.id, { fallback: e.target.value || undefined })}
+                onChange={(e) => setLocalFallback(e.target.value)}
+                onBlur={() => updateBox(box.id, { fallback: localFallback || undefined })}
                 className="text-input default-text nodrag"
                 />
                 <Handle

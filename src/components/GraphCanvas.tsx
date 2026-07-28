@@ -1,6 +1,7 @@
-import { useMemo, useCallback, useRef } from "react";
+import { useMemo, useCallback, useRef, useEffect } from "react";
 import ReactFlow from "reactflow";
-import type { Node, Edge, NodeChange } from "reactflow";
+import type { Node, Edge } from "reactflow";
+import { useNodesState } from "reactflow";
 import "reactflow/dist/style.css";
 import { useGraphStore } from "../store/graphStore";
 import DialogueBox from "./DialogueBox";
@@ -15,37 +16,24 @@ export default function GraphCanvas() {
   const graph = useGraphStore((s) => s.graph);
   const moveBox = useGraphStore((s) => s.moveBox);
   const edgesRef = useRef<Map<string, Edge>>(new Map());
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
 
-  const nodesCacheRef = useRef<Map<string, Node>>(new Map());
+  useEffect(() => {
+  const nextNodes = Object.values(graph.boxes).map((box) => ({
+    id: box.id,
+    type: box.kind + "Box",
+    position: box.position,
+    data: { box },
+  }));
+  setNodes(nextNodes);
+  }, [graph.boxes, setNodes]);
 
-  const prevNodesArrayRef = useRef<Node[]>([]);
-
-  const nodes: Node[] = useMemo(() => {
-    const list: Node[] = [];
-    const nextCache = new Map<string, Node>();
-
-    Object.values(graph.boxes).forEach((box) => {
-      const prev = nodesCacheRef.current.get(box.id);
-      if (prev && prev.data.box === box) {
-        nextCache.set(box.id, prev);
-        list.push(prev);
-        return;
-      }
-      const node: Node = { id: box.id, type: box.kind + "Box", position: box.position, data: { box } };
-      nextCache.set(box.id, node);
-      list.push(node);
-    });
-
-    nodesCacheRef.current = nextCache;
-
-    const prevArray = prevNodesArrayRef.current;
-    const sameArray =
-      prevArray.length === list.length && prevArray.every((n, i) => n === list[i]);
-
-    const finalList = sameArray ? prevArray : list;
-    prevNodesArrayRef.current = finalList;
-    return finalList;
-  }, [graph.boxes]);
+  const onNodeDragStop = useCallback(
+    (_: React.MouseEvent, node: Node) => {
+      moveBox(node.id, node.position);
+    },
+    [moveBox]
+  );
 
   const keyToBox = useMemo(() => {
     const map = new Map<string, GraphNode>();
@@ -101,39 +89,13 @@ export default function GraphCanvas() {
     return list;
 }, [graph.boxes, keyToBox]);
 
-  const dragUpdateThrottle = useRef<number | null>(null);
-
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) => {
-      changes.forEach((change) => {
-        if (change.type === "position" && change.position) {
-          if (change.dragging === false) {
-            if (dragUpdateThrottle.current) {
-              clearTimeout(dragUpdateThrottle.current);
-              dragUpdateThrottle.current = null;
-            }
-            moveBox(change.id, change.position);
-          } else {
-            if (dragUpdateThrottle.current) return;
-            dragUpdateThrottle.current = window.setTimeout(() => {
-              moveBox(change.id, change.position!);
-              dragUpdateThrottle.current = null;
-            }, 50); 
-          }
-        }
-      });
-    },
-    [moveBox]
-  );
-
-
-
   return (
     <div className="graph-canvas-wrapper">
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
+        onNodeDragStop={onNodeDragStop}
         nodeTypes={nodeTypes}
         fitView
         onlyRenderVisibleElements
