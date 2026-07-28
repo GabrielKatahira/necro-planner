@@ -3,6 +3,7 @@ import { memo, useState, useEffect } from "react";
 import type { DialogueBox } from "../types/dialogue";
 import { Character } from "../types/character";
 import { useGraphStore } from "../store/graphStore";
+import { useShallow } from "zustand/shallow";
 
 interface Props {
   data: { box: DialogueBox };
@@ -14,11 +15,15 @@ function dialogueBox({ data, selected }: Props) {
   const { box } = data;
 
 
-  const updateBox = useGraphStore((s) => s.updateDialogueBox);
-  const addChoice = useGraphStore((s) => s.addChoice);
-  const updateChoice = useGraphStore((s) => s.updateChoice);
-  const deleteChoice = useGraphStore((s) => s.deleteChoice);
-  const deleteBox = useGraphStore((s) => s.deleteBox);
+  const { updateBox, addChoice, updateChoice, deleteChoice, deleteBox } = useGraphStore(
+    useShallow((s) => ({
+        updateBox: s.updateDialogueBox,
+        addChoice: s.addChoice,
+        updateChoice: s.updateChoice,
+        deleteChoice: s.deleteChoice,
+        deleteBox: s.deleteBox,
+    }))
+    );
 
   const [localText, setLocalText] = useState(box.text);
   const [localKey, setLocalKey] = useState(box.key ?? "");
@@ -175,4 +180,10 @@ function dialogueBox({ data, selected }: Props) {
   );
 }
 
-export default memo(dialogueBox);
+export default memo(dialogueBox, (prev, next) => {
+  return (
+    prev.selected === next.selected &&
+    prev.id === next.id &&
+    prev.data.box === next.data.box
+  );
+});
