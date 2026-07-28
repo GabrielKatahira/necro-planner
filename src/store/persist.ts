@@ -2,6 +2,16 @@ import type { DialogueGraph } from "../types/dialogue";
 
 const STORAGE_KEY = "dialogue-planner:graph";
 
+let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+
+export function saveGraphDebounced(graph: DialogueGraph, delayMs = 400) {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    saveGraph(graph);
+  }, delayMs);
+}
+
+
 export function saveGraph(graph: DialogueGraph) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(graph));
 }

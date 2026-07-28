@@ -8,8 +8,9 @@ interface Props {
   id: string;
 }
 
-export default function conditionBox({data, selected, id} : Props) {
+export default function conditionBox({data, selected} : Props) {
     const { box } = data;
+
     
     const updateBox = useGraphStore((s) => s.updateConditionBox);
     const addEvaluation = useGraphStore((s) => s.addEvaluation);

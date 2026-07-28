@@ -100,13 +100,6 @@ function getVisibleWorldBounds(viewport: { x: number; y: number; zoom: number },
   };
 }
 
-function worldToScreen(worldX: number, worldY: number, viewport: { x: number; y: number; zoom: number }) {
-  return {
-    screenX: worldX * viewport.zoom + viewport.x,
-    screenY: worldY * viewport.zoom + viewport.y,
-  };
-}
-
 export default function StarfieldBackground() {
   const { x, y, zoom } = useViewport();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -166,49 +159,53 @@ export default function StarfieldBackground() {
     let rafId: number;
 
     const draw = (time: number) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const viewport = viewportRef.current;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const viewport = viewportRef.current;
 
-      for (const chunk of chunksRef.current.values()) {
-        // constellation lines first, so stars render on top
-        ctx.strokeStyle = "white";
-        for (const link of chunk.links) {
-          const a = chunk.stars[link.a];
-          const b = chunk.stars[link.b];
-          const pulse = Math.sin(time * link.pulseSpeed + link.pulsePhase);
-          const opacity = Math.max(0, pulse) * 0.1;
+  for (const chunk of chunksRef.current.values()) {
+    ctx.strokeStyle = "white";
+    for (const link of chunk.links) {
+      const a = chunk.stars[link.a];
+      const b = chunk.stars[link.b];
+      const pulse = Math.sin(time * link.pulseSpeed + link.pulsePhase);
+      const opacity = Math.max(0, pulse) * 0.1;
 
-          const pa = worldToScreen(a.x, a.y, viewport);
-          const pb = worldToScreen(b.x, b.y, viewport);
+      // inline math, zero allocation
+      const paX = a.x * viewport.zoom + viewport.x;
+      const paY = a.y * viewport.zoom + viewport.y;
+      const pbX = b.x * viewport.zoom + viewport.x;
+      const pbY = b.y * viewport.zoom + viewport.y;
 
-          ctx.globalAlpha = opacity;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(pa.screenX, pa.screenY);
-          ctx.lineTo(pb.screenX, pb.screenY);
-          ctx.stroke();
-        }
+      ctx.globalAlpha = opacity;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(paX, paY);
+      ctx.lineTo(pbX, pbY);
+      ctx.stroke();
+    }
 
-        // stars
-        ctx.fillStyle = "white";
-        chunk.stars.forEach((star, index) => {
-          if (!chunk.linkedIndices.has(index)) {
-            star.x += star.driftX;
-            star.y += star.driftY;
-            if (star.x < chunk.originX || star.x > chunk.originX + CHUNK_SIZE) star.driftX *= -1;
-            if (star.y < chunk.originY || star.y > chunk.originY + CHUNK_SIZE) star.driftY *= -1;
-            star.x = Math.max(chunk.originX, Math.min(chunk.originX + CHUNK_SIZE, star.x));
-            star.y = Math.max(chunk.originY, Math.min(chunk.originY + CHUNK_SIZE, star.y));
-          }
+    ctx.fillStyle = "white";
+    chunk.stars.forEach((star, index) => {
+      if (!chunk.linkedIndices.has(index)) {
+        star.x += star.driftX;
+        star.y += star.driftY;
+        if (star.x < chunk.originX || star.x > chunk.originX + CHUNK_SIZE) star.driftX *= -1;
+        if (star.y < chunk.originY || star.y > chunk.originY + CHUNK_SIZE) star.driftY *= -1;
+        star.x = Math.max(chunk.originX, Math.min(chunk.originX + CHUNK_SIZE, star.x));
+        star.y = Math.max(chunk.originY, Math.min(chunk.originY + CHUNK_SIZE, star.y));
+      }
 
-          const twinkle = Math.sin(time * star.twinkleSpeed + star.twinklePhase);
-          const opacity = star.baseOpacity + twinkle * 0.3;
-          const { screenX, screenY } = worldToScreen(star.x, star.y, viewport);
+      const twinkle = Math.sin(time * star.twinkleSpeed + star.twinklePhase);
+      const opacity = star.baseOpacity + twinkle * 0.3;
 
-          ctx.globalAlpha = Math.max(0, Math.min(1, opacity));
-          ctx.beginPath();
-          ctx.arc(screenX, screenY, star.radius * viewport.zoom, 0, Math.PI * 2);
-          ctx.fill();
+      // inline math, zero allocation
+      const screenX = star.x * viewport.zoom + viewport.x;
+      const screenY = star.y * viewport.zoom + viewport.y;
+
+      ctx.globalAlpha = Math.max(0, Math.min(1, opacity));
+      ctx.beginPath();
+      ctx.arc(screenX, screenY, star.radius * viewport.zoom, 0, Math.PI * 2);
+      ctx.fill();
         });
       }
 
