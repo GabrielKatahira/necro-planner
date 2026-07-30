@@ -53,3 +53,7 @@ export interface ConditionBox {
 }
 
 export type GraphNode = DialogueBox | ConditionBox
+export interface NodeMapping {
+  dialogue: DialogueBox;
+  condition: ConditionBox;
+}

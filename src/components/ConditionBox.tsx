@@ -13,7 +13,7 @@ export default function conditionBox({data, selected} : Props) {
     const { box } = data;
 
     
-    const updateBox = useGraphStore((s) => s.updateConditionBox);
+    const updateBox = useGraphStore((s) => s.updateBox);
     const addEvaluation = useGraphStore((s) => s.addEvaluation);
     const updateEvaluation = useGraphStore((s) => s.updateEvaluation);
     const deleteEvaluation = useGraphStore((s) => s.deleteEvaluation);
@@ -58,7 +58,7 @@ export default function conditionBox({data, selected} : Props) {
                 key={`key-${box.id}`}
                 placeholder="current key..."   
                 onChange={(e) => setLocalKey(e.target.value)}
-                onBlur={() => updateBox(box.id, { key: localKey || undefined })}
+                onBlur={() => updateBox("condition",box.id, { key: localKey || undefined })}
                 className="text-input nodrag key-text"
                 />
                 <button className="delete-btn" onClick={() => deleteBox(box.id)} title="Delete box">
@@ -138,7 +138,7 @@ export default function conditionBox({data, selected} : Props) {
                 defaultValue={localFallback}
                 placeholder="box key..."
                 onChange={(e) => setLocalFallback(e.target.value)}
-                onBlur={() => updateBox(box.id, { fallback: localFallback || undefined })}
+                onBlur={() => updateBox("condition",box.id, { fallback: localFallback || undefined })}
                 className="text-input default-text nodrag"
                 />
                 <Handle
