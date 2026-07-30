@@ -5,8 +5,7 @@ import { exportGraphAsFile,importGraphFromFile } from "../store/persist";
 
 export default function Toolbar() {
   const { screenToFlowPosition } = useReactFlow();
-  const addDialogueBox = useGraphStore((s) => s.addDialogueBox);
-  const addConditionBox = useGraphStore((s) => s.addConditionBox);
+  const addBox = useGraphStore((s) => s.addBox);
   const graph = useGraphStore((s) => s.graph);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const resetGraph = useGraphStore((s) => s.resetGraph);
@@ -17,8 +16,8 @@ export default function Toolbar() {
   return (
     <>
       <div className="toolbar">
-        <button onClick={() => addDialogueBox(centerOfScreen())}>+ Add Dialogue Box</button>
-        <button onClick={() => addConditionBox(centerOfScreen())}>+ Add Condition Box</button>
+        <button onClick={() => addBox("dialogue",centerOfScreen())}>+ Add Dialogue Box</button>
+        <button onClick={() => addBox("condition",centerOfScreen())}>+ Add Condition Box</button>
       </div>
       <div className="jsonbar">
         <button onClick={() => exportGraphAsFile(graph)}>Export JSON</button>

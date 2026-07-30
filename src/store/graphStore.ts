@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { DialogueGraph, DialogueBox, Choice, ConditionBox, ConditionEvaluation } from "../types/dialogue";
+import type { DialogueGraph, DialogueBox, Choice, ConditionBox, ConditionEvaluation, NodeMapping } from "../types/dialogue";
 import { starterGraph } from "../data/starterGraph";
 import { loadGraph, saveGraphDebounced } from "./persist";
 import { Character } from "../types/character";
@@ -12,6 +12,9 @@ interface GraphStore {
   
   addConditionBox: (position: { x: number; y: number }) => string;
   updateConditionBox: (id: string, patch: Partial<ConditionBox>) => void;
+
+  addBox: (kind: string, position: { x: number; y: number }) => string;
+  updateBox: <T extends keyof NodeMapping>(kind: T, id: string, patch: Partial<NodeMapping[T]>) => void;
 
   deleteBox: (id: string) => void;
   moveBox: (id: string, position: { x: number; y: number }) => void;
@@ -70,6 +73,71 @@ export const useGraphStore = create<GraphStore>((set) => ({
       },
     })),
 
+  addBox: (kind, position) => {
+    const id = nextId("box");
+    switch (kind) {
+      case "dialogue":
+        set((state) => ({
+          graph: {
+            ...state.graph,
+            boxes: {
+              ...state.graph.boxes,
+              [id]: {
+                id,
+                key: "",
+                speaker: Character.NARRATOR,
+                kind:"dialogue",
+                text: "",
+                choices: [],
+                defaultNext: null,
+                position,
+              } satisfies DialogueBox,
+              },
+          },
+        }));
+        break;
+      case "condition":
+        set((state) => ({
+          graph: {
+            ...state.graph,
+            boxes: {
+              ...state.graph.boxes,
+              [id]: {
+                id,
+                key: "",
+                kind:"condition",
+                evaluations:[],
+                fallback:"",
+                position
+              } satisfies ConditionBox,
+            },
+          },
+        }));
+        break;
+    }
+    return id;
+  },
+
+  updateBox: <T extends keyof NodeMapping>(kind: T, id: string, patch: Partial<NodeMapping[T]>) => {
+    set((state) => {
+      const currentBox = state.graph.boxes[id];
+
+      if (!currentBox || currentBox.kind !== kind.toString()) {
+        console.warn(`Cannot update: Box ${id} is not of type ${kind}`);
+        return state;
+      }
+
+      return{
+        graph: {
+          ...state.graph,
+          boxes: {
+            ...state.graph.boxes,
+            [id]: { ...currentBox, ...patch } as NodeMapping[T]
+          },
+        },
+      }
+    })
+  },
 
   addConditionBox: (position) => {
     const id = nextId("box");

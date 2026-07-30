@@ -17,7 +17,7 @@ function dialogueBox({ data, selected }: Props) {
 
   const { updateBox, addChoice, updateChoice, deleteChoice, deleteBox } = useGraphStore(
     useShallow((s) => ({
-        updateBox: s.updateDialogueBox,
+        updateBox: s.updateBox,
         addChoice: s.addChoice,
         updateChoice: s.updateChoice,
         deleteChoice: s.deleteChoice,
@@ -67,7 +67,7 @@ function dialogueBox({ data, selected }: Props) {
           value={box.speaker?.id ?? ""}
           onChange={(e) => {
             const found = Object.values(Character).find((c) => c.id === e.target.value);
-            updateBox(box.id, { speaker: found ?? null });
+            updateBox("dialogue",box.id, { speaker: found ?? null });
           }}
           className="dropdown-select"
         >
@@ -84,7 +84,7 @@ function dialogueBox({ data, selected }: Props) {
           key={`key-${box.id}`}
           placeholder="current key..."
           onChange={(e) => setLocalKey(e.target.value)}
-          onBlur={() => updateBox(box.id, { key: localKey || undefined })}
+          onBlur={() => updateBox("dialogue",box.id, { key: localKey || undefined })}
           className="text-input nodrag key-choice key-text"
         />
 
@@ -100,7 +100,7 @@ function dialogueBox({ data, selected }: Props) {
           key={`custom-${box.id}`}
           placeholder="enter name..."
           onChange={(e) => setLocalCustomName(e.target.value)}
-          onBlur={() => updateBox(box.id, { customSpeakerName: localCustomName })}
+          onBlur={() => updateBox("dialogue",box.id, { customSpeakerName: localCustomName })}
         />
       )}
 
@@ -109,7 +109,7 @@ function dialogueBox({ data, selected }: Props) {
         defaultValue={localText}
         key={`text-${box.id}`}
         onChange={(e) => setLocalText(e.target.value)}
-        onBlur={() => updateBox(box.id, { text: localText })}
+        onBlur={() => updateBox("dialogue",box.id, { text: localText })}
         placeholder="dialogue text..."
         rows={3}
       />
@@ -165,7 +165,7 @@ function dialogueBox({ data, selected }: Props) {
           key={`default-${box.id}`}
           placeholder="box key..."
           onChange={(e) => setLocalDefaultNext(e.target.value)}
-          onBlur={() => updateBox(box.id, { defaultNext: localDefaultNext || null })}
+          onBlur={() => updateBox("dialogue",box.id, { defaultNext: localDefaultNext || null })}
           className="text-input default-text nodrag"
         />
         <Handle
