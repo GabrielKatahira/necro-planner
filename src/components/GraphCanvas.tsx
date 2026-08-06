@@ -6,11 +6,12 @@ import "reactflow/dist/style.css";
 import { useGraphStore } from "../store/graphStore";
 import DialogueBox from "./DialogueBox";
 import ConditionBox from "./ConditionBox";
+import ChoiceConditionBox from "./ChoiceConditionBox";
 import Toolbar from "./Toolbar";
 import StarfieldBackground from "./StarfieldBackground";
 import type { GraphNode } from "../types/dialogue";
 
-const nodeTypes = { dialogueBox: DialogueBox, conditionBox : ConditionBox};
+const nodeTypes = { dialogueBox: DialogueBox, conditionBox : ConditionBox, choiceConditionBox: ChoiceConditionBox};
 
 export default function GraphCanvas() {
   const graph = useGraphStore((s) => s.graph);
@@ -23,6 +24,7 @@ export default function GraphCanvas() {
     id: box.id,
     type: box.kind + "Box",
     position: box.position,
+    parentId: box.kind === "choiceCondition" ? box.parentId : undefined,
     data: { box },
   }));
   setNodes(nextNodes);
@@ -46,14 +48,18 @@ export default function GraphCanvas() {
     const list: Edge[] = [];
     const nextEdgeMap = new Map<string, Edge>();
 
-    function makeOrReuseEdge(id: string, source: string, sourceHandle: string, target: string, style?: any) {
+    function makeOrReuseEdge(id: string, source: string, sourceHandle: string, target: string, targetHandle?: string, style?: any) {
       const prev = edgesRef.current.get(id);
       
-      if (prev && prev.source === source && prev.target === target && prev.sourceHandle === sourceHandle) {
+      if (prev && 
+          prev.source === source && 
+          prev.target === target && 
+          prev.sourceHandle === sourceHandle &&
+          prev.targetHandle === targetHandle) {
         nextEdgeMap.set(id, prev);
         return prev;
       }
-      const edge: Edge = { id, source, sourceHandle, target, style };
+      const edge: Edge = { id, source, sourceHandle, target, targetHandle, style };
       nextEdgeMap.set(id, edge);
       return edge;
     }
@@ -65,10 +71,25 @@ export default function GraphCanvas() {
             const target = keyToBox.get(choice.next);
             if (target) list.push(makeOrReuseEdge(`${box.id}-${choice.id}`, box.id, `${box.id}-${choice.id}`, target.id));
           }
+
+          if (choice.choiceConditionId) {
+          const conditionBox = graph.boxes[choice.choiceConditionId];
+          if (conditionBox) {
+            list.push(
+              makeOrReuseEdge(
+                `${conditionBox.id}`,
+                conditionBox.id,
+                `${conditionBox.id}`,
+                box.id,
+                `${box.id}-${choice.id}-condition-target`
+              )
+            );
+          }
+        }
         });
         if (box.defaultNext) {
           const target = keyToBox.get(box.defaultNext);
-          if (target) list.push(makeOrReuseEdge(`${box.id}-default`, box.id, `${box.id}-default`, target.id, { strokeDasharray: "4 4" }));
+          if (target) list.push(makeOrReuseEdge(`${box.id}-default`, box.id, `${box.id}-default`, target.id, "",{ strokeDasharray: "4 4" }));
         }
       }
       if (box.kind === "condition") {
@@ -80,7 +101,7 @@ export default function GraphCanvas() {
         });
         if (box.fallback) {
           const target = keyToBox.get(box.fallback);
-          if (target) list.push(makeOrReuseEdge(`${box.id}-fallback`, box.id, `${box.id}-fallback`, target.id, { strokeDasharray: "4 4" }));
+          if (target) list.push(makeOrReuseEdge(`${box.id}-fallback`, box.id, `${box.id}-fallback`, target.id, "",{ strokeDasharray: "4 4" }));
         }
       }
     });
@@ -98,7 +119,6 @@ export default function GraphCanvas() {
         onNodeDragStop={onNodeDragStop}
         nodeTypes={nodeTypes}
         fitView
-        onlyRenderVisibleElements
       >
         <StarfieldBackground/>
         <Toolbar/>

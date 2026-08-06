@@ -1,17 +1,11 @@
 import { create } from "zustand";
-import type { DialogueGraph, DialogueBox, Choice, ConditionBox, ConditionEvaluation, NodeMapping } from "../types/dialogue";
+import type { DialogueGraph, DialogueBox, Choice, ConditionBox, ConditionEvaluation, NodeMapping, ChoiceConditionBox, VisibilityCheck } from "../types/dialogue";
 import { starterGraph } from "../data/starterGraph";
 import { loadGraph, saveGraphDebounced } from "./persist";
 import { Character } from "../types/character";
 
 interface GraphStore {
   graph: DialogueGraph;
-
-  addDialogueBox: (position: { x: number; y: number }) => string;
-  updateDialogueBox: (id: string, patch: Partial<DialogueBox>) => void;
-  
-  addConditionBox: (position: { x: number; y: number }) => string;
-  updateConditionBox: (id: string, patch: Partial<ConditionBox>) => void;
 
   addBox: (kind: string, position: { x: number; y: number }) => string;
   updateBox: <T extends keyof NodeMapping>(kind: T, id: string, patch: Partial<NodeMapping[T]>) => void;
@@ -26,6 +20,12 @@ interface GraphStore {
   updateChoice: (boxId: string, choiceId: string, patch: Partial<Choice>) => void;
   deleteChoice: (boxId: string, choiceId: string) => void;
 
+  addChoiceCondition: (boxId: string, choiceId: string, position: {x: number, y: number}) => void;
+  deleteChoiceCondition: (choiceConditionId: string) => void;
+  addChoiceConditionCheck: (boxId: string) => void;
+  updateChoiceConditionCheck: (boxId:string, checkId:string, patch: Partial<VisibilityCheck>) => void;
+  deleteChoiceConditionCheck: (boxId:string, checkId:string) => void;
+
   addEvaluation: (boxId: string) => void;
   updateEvaluation: (boxId: string, evaluationId: string, patch: Partial<ConditionEvaluation>) => void;
   deleteEvaluation: (boxId: string, evaluationId: string) => void;
@@ -38,40 +38,6 @@ const nextId = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
 
 export const useGraphStore = create<GraphStore>((set) => ({
   graph: loadGraph() ?? starterGraph,
-
-  addDialogueBox: (position) => {
-    const id = nextId("box");
-    set((state) => ({
-      graph: {
-        ...state.graph,
-        boxes: {
-          ...state.graph.boxes,
-          [id]: {
-            id,
-            key: "",
-            speaker: Character.NARRATOR,
-            kind:"dialogue",
-            text: "",
-            choices: [],
-            defaultNext: null,
-            position,
-          } satisfies DialogueBox,
-        },
-      },
-    }));
-    return id;
-  },
-
-  updateDialogueBox: (id, patch) =>
-    set((state) => ({
-      graph: {
-        ...state.graph,
-        boxes: {
-          ...state.graph.boxes,
-          [id]: { ...state.graph.boxes[id], ...patch } as DialogueBox,
-        },
-      },
-    })),
 
   addBox: (kind, position) => {
     const id = nextId("box");
@@ -139,42 +105,16 @@ export const useGraphStore = create<GraphStore>((set) => ({
     })
   },
 
-  addConditionBox: (position) => {
-    const id = nextId("box");
-    set((state) => ({
-      graph: {
-        ...state.graph,
-        boxes: {
-          ...state.graph.boxes,
-          [id]: {
-            id,
-            key: "",
-            kind:"condition",
-            evaluations:[],
-            fallback:"",
-            position
-          } satisfies ConditionBox,
-        },
-      },
-    }));
-    return id;
-  },
-
-  updateConditionBox: (id, patch) =>
-    set((state) => ({
-      graph: {
-        ...state.graph,
-        boxes: {
-          ...state.graph.boxes,
-          [id]: { ...state.graph.boxes[id], ...patch } as ConditionBox,
-        },
-      },
-    })),
-
   deleteBox: (id) =>
     set((state) => {
       const boxes = { ...state.graph.boxes };
       delete boxes[id];
+      Object.keys(boxes).forEach((key) => {
+        const box = boxes[key];
+        if (box.kind === "choiceCondition" && box.parentId === id) {
+          delete boxes[key];
+        }
+      });
       return {
         graph: {
           ...state.graph,
@@ -248,7 +188,15 @@ export const useGraphStore = create<GraphStore>((set) => ({
   deleteChoice: (boxId, choiceId) =>
     set((state) => {
       const box = state.graph.boxes[boxId];
+
       if (!box || box.kind != "dialogue") return state;
+
+      const targetChoice = box.choices.find((c) => c.id === choiceId);
+      const boxes = { ...state.graph.boxes };
+
+      if (targetChoice?.choiceConditionId && boxes[targetChoice.choiceConditionId]) {
+        delete boxes[targetChoice.choiceConditionId];
+      }
       return {
         graph: {
           ...state.graph,
@@ -259,6 +207,126 @@ export const useGraphStore = create<GraphStore>((set) => ({
         },
       };
     }),
+  addChoiceCondition: (boxId: string, choiceId: string, position: { x: number; y: number }) => {
+    set((state) => {
+      const box = state.graph.boxes[boxId];
+      if (!box || box.kind !== "dialogue") return state;
+
+      const conditionId = nextId("cc");
+
+      const newChoiceConditionBox: ChoiceConditionBox = {
+        id: conditionId,
+        key: conditionId,
+        kind: "choiceCondition",
+        parentId: boxId, 
+        checks: [],
+        position,
+      };
+
+      const updatedChoices = box.choices.map((c) =>
+        c.id === choiceId ? { ...c, choiceConditionId: conditionId } : c
+      );
+
+      return {
+        graph: {
+          ...state.graph,
+          boxes: {
+            ...state.graph.boxes,
+            [conditionId]: newChoiceConditionBox,
+            [boxId]: {
+              ...box,
+              choices: updatedChoices,
+            },
+          },
+        },
+      };
+    });
+  },
+
+  deleteChoiceCondition:(choiceConditionId) =>{
+    set((state) =>{
+      const conditionBox = state.graph.boxes[choiceConditionId];
+      if (!conditionBox || conditionBox.kind !== "choiceCondition") return state;
+
+      const boxes = { ...state.graph.boxes };
+
+      delete boxes[choiceConditionId];
+
+      const parentBox = boxes[conditionBox.parentId];
+      if (parentBox && parentBox.kind === "dialogue") {
+        boxes[conditionBox.parentId] = {
+          ...parentBox,
+          choices: parentBox.choices.map((choice) =>
+            choice.choiceConditionId === choiceConditionId
+              ? { ...choice, choiceConditionId: undefined }
+              : choice
+          ),
+        };
+      }
+
+      return {
+        graph: {
+          ...state.graph,
+          boxes,
+        },
+      };
+    })
+  },
+
+  addChoiceConditionCheck: (boxId) => 
+    set((state) => {
+      const box = state.graph.boxes[boxId];
+      if (!box || box.kind != "choiceCondition") return state;
+      const newCheck: VisibilityCheck = {
+        id: nextId("cc-chk"),
+        variable: "",
+        evaluator: "==",
+        value: ""
+      }
+      return {
+        graph: {
+          ...state.graph,
+          boxes: {
+            ...state.graph.boxes,
+            [boxId]: {...box,checks:[...box.checks, newCheck]},
+          },
+        },
+      };
+    }),
+  
+  updateChoiceConditionCheck: (boxId,checkId,patch) => 
+    set((state) => {
+      const box = state.graph.boxes[boxId];
+      if (!box || box.kind != "choiceCondition") return state;
+      return {
+        graph: {
+          ...state.graph,
+          boxes:{
+            ...state.graph.boxes,
+            [boxId]:{
+              ...box,
+              checks: box.checks.map((c) => (c.id === checkId ? {...c,...patch} : c)),
+            },
+          },
+        },
+      };
+    }),
+  
+    deleteChoiceConditionCheck : (boxId,checkId) => 
+      set((state) => {
+        const box = state.graph.boxes[boxId];
+        if (!box || box.kind != "choiceCondition") return state;
+        return {
+          graph: {
+            ...state.graph,
+            boxes: {
+              ...state.graph.boxes,
+              [boxId]: {...box,checks: box.checks.filter((c) => c.id !== checkId)},
+            },
+          },
+        };
+      }),
+  
 
   addEvaluation: (boxId) =>
     set((state) => {
