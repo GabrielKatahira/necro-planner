@@ -159,11 +159,15 @@ function dialogueBox({ data, selected }: Props) {
             <button className="delete-btn small" onClick={() => {
                 choice.choiceConditionId ?
                   deleteChoiceCondition(choice.choiceConditionId)
-                : addChoiceCondition(box.id,choice.id,{x:-300,y:100})
+                : addChoiceCondition(box.id,choice.id,{x:-220,y:100+(index*30)})
             }}>
               ?
             </button>
-            <button className="delete-btn small" onClick={() => deleteChoice(box.id, choice.id)}>
+            <button className="delete-btn small" onClick={() => {
+              if(choice.choiceConditionId)
+                deleteChoiceCondition(choice.choiceConditionId)
+              deleteChoice(box.id, choice.id)
+              }}>
               ✕
             </button>
             <Handle
