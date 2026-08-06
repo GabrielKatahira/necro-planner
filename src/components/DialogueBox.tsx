@@ -4,7 +4,6 @@ import type { DialogueBox } from "../types/dialogue";
 import { Character } from "../types/character";
 import { useGraphStore } from "../store/graphStore";
 import { useShallow } from "zustand/shallow";
-
 interface Props {
   data: { box: DialogueBox };
   selected: boolean;
@@ -15,13 +14,22 @@ function dialogueBox({ data, selected }: Props) {
   const { box } = data;
 
 
-  const { updateBox, addChoice, updateChoice, deleteChoice, deleteBox } = useGraphStore(
+  const { updateBox,
+          addChoice, 
+          updateChoice, 
+          deleteChoice, 
+          deleteBox, 
+          addChoiceCondition ,
+          deleteChoiceCondition
+        } = useGraphStore(
     useShallow((s) => ({
         updateBox: s.updateBox,
         addChoice: s.addChoice,
         updateChoice: s.updateChoice,
         deleteChoice: s.deleteChoice,
         deleteBox: s.deleteBox,
+        addChoiceCondition: s.addChoiceCondition,
+        deleteChoiceCondition: s.deleteChoiceCondition
     }))
     );
 
@@ -117,6 +125,13 @@ function dialogueBox({ data, selected }: Props) {
       <div className="choices-list">
         {box.choices.map((choice, index) => (
           <div key={choice.id} className="choice-row">
+            <Handle
+              type="target"
+              position={Position.Left}
+              id={`${box.id}-${choice.id}-condition-target`}
+              isConnectable={false}
+              style={{ top: "50%", transform: "translateY(-50%)" }}
+            />
             <input
               className="choice-prompt nodrag"
               defaultValue={localChoices[index]?.prompt ?? ""}
@@ -141,6 +156,13 @@ function dialogueBox({ data, selected }: Props) {
               }}
               onBlur={() => updateChoice(box.id, choice.id, { next: localChoices[index]?.next ?? "" })}
             />
+            <button className="delete-btn small" onClick={() => {
+                choice.choiceConditionId ?
+                  deleteChoiceCondition(choice.choiceConditionId)
+                : addChoiceCondition(box.id,choice.id,{x:-300,y:100})
+            }}>
+              ?
+            </button>
             <button className="delete-btn small" onClick={() => deleteChoice(box.id, choice.id)}>
               ✕
             </button>

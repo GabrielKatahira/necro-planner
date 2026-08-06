@@ -16,6 +16,7 @@ export interface Choice {
   id: string;
   prompt: string; 
   next: string;
+  choiceConditionId?: string;
 }
 
 export interface DialogueBox {
@@ -52,8 +53,25 @@ export interface ConditionBox {
   position: { x: number; y: number };
 }
 
-export type GraphNode = DialogueBox | ConditionBox
+export interface VisibilityCheck {
+  id: string;
+  variable: string;
+  evaluator: Evaluator;
+  value: string;
+}
+
+export interface ChoiceConditionBox {
+  id: string;
+  key: string;
+  kind: "choiceCondition";
+  parentId: string;
+  checks: VisibilityCheck[]; 
+  position: { x: number; y: number };
+}
+
+export type GraphNode = DialogueBox | ConditionBox | ChoiceConditionBox
 export interface NodeMapping {
   dialogue: DialogueBox;
   condition: ConditionBox;
+  choiceCondition: ChoiceConditionBox;
 }
