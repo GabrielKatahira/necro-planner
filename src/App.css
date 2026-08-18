@@ -198,9 +198,13 @@ html, body, #root {
   color: #598ff3;
 }
 
-.react-flow__handle {
-  opacity: 1;
-  pointer-events: none;
+.react-flow .react-flow__handle {
+  transform: scale(250%);
+  background-color: #fff;
+  border: none;
+  border-radius: 50%;
+  -webkit-mask-image: radial-gradient(circle at 35% 35%, transparent 50%, black 52%);
+  mask-image: radial-gradient(circle at 35% 35%, transparent 50%, black 52%);
 }
 .react-flow__node {
   will-change: transform;

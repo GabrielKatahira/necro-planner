@@ -118,7 +118,7 @@ function dialogueBox({ data, selected }: Props) {
               position={Position.Left}
               id={`${box.id}-${choice.id}-condition-target`}
               isConnectable={false}
-              style={{ top: "50%", transform: "translateY(-50%)" }}
+              style={{ top: "50%", transform: "translateY(-50%)", opacity: 0}}
             />
             <input
               className="choice-prompt nodrag"
