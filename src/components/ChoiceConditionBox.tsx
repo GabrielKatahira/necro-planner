@@ -36,6 +36,7 @@ export default function choiceConditionBox({data, selected} : Props) {
                 position={Position.Right}
                 id={`${box.id}`}
                 isConnectable={false}
+                style={{opacity:0}}
             />
             <div className={`choice-condition-checks-wrapper`}>
                 {box.checks.map((check, index) => (

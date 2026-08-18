@@ -9,7 +9,6 @@ import ConditionBox from "./ConditionBox";
 import ChoiceConditionBox from "./ChoiceConditionBox";
 import Toolbar from "./Toolbar";
 import StarfieldBackground from "./StarfieldBackground";
-import type { GraphNode } from "../types/dialogue";
 
 const nodeTypes = { dialogueBox: DialogueBox, conditionBox : ConditionBox, choiceConditionBox: ChoiceConditionBox};
 
@@ -47,12 +46,6 @@ export default function GraphCanvas() {
     },
     [moveBox]
   );
-
-  const keyToBox = useMemo(() => {
-    const map = new Map<string, GraphNode>();
-    Object.values(graph.boxes).forEach((box) => map.set(box.id, box));
-    return map;
-  }, [graph.boxes]);
 
 
   const edges: Edge[] = useMemo(() => {
