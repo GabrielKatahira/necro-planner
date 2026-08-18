@@ -3,6 +3,7 @@ import type { DialogueGraph, DialogueBox, Choice, ConditionBox, ConditionEvaluat
 import { starterGraph } from "../data/starterGraph";
 import { loadGraph, saveGraphDebounced } from "./persist";
 import { Character } from "../types/character";
+import type { Edge } from "reactflow";
 
 interface GraphStore {
   graph: DialogueGraph;
@@ -12,9 +13,11 @@ interface GraphStore {
 
   deleteBox: (id: string) => void;
   moveBox: (id: string, position: { x: number; y: number }) => void;
+
+  //obsolete
   
-  resolveKeyToId: (key: string, graph: DialogueGraph) => string | null;
-  resolveIdToKey: (id: string | null, graph: DialogueGraph) => string;
+  //resolveKeyToId: (key: string, graph: DialogueGraph) => string | null; 
+  //resolveIdToKey: (id: string | null, graph: DialogueGraph) => string; 
 
   addChoice: (boxId: string) => void;
   updateChoice: (boxId: string, choiceId: string, patch: Partial<Choice>) => void;
@@ -29,6 +32,9 @@ interface GraphStore {
   addEvaluation: (boxId: string) => void;
   updateEvaluation: (boxId: string, evaluationId: string, patch: Partial<ConditionEvaluation>) => void;
   deleteEvaluation: (boxId: string, evaluationId: string) => void;
+
+  connectNodes: (connection: { source: string | null; sourceHandle: string | null; target: string | null; targetHandle: string | null }) => void;
+  onEdgesDelete: (edges: Edge[]) => void;
 
   setStartBox: (id: string) => void;
   resetGraph: (position: { x: number; y: number }) => void;
@@ -50,7 +56,6 @@ export const useGraphStore = create<GraphStore>((set) => ({
               ...state.graph.boxes,
               [id]: {
                 id,
-                key: "",
                 speaker: Character.NARRATOR,
                 kind:"dialogue",
                 text: "",
@@ -70,7 +75,6 @@ export const useGraphStore = create<GraphStore>((set) => ({
               ...state.graph.boxes,
               [id]: {
                 id,
-                key: "",
                 kind:"condition",
                 evaluations:[],
                 fallback:"",
@@ -134,18 +138,80 @@ export const useGraphStore = create<GraphStore>((set) => ({
         },
       },
     })),
+    connectNodes: (connection) =>
+  set((state) => {
+    const { source, sourceHandle, target } = connection;
+    if (!source || !sourceHandle || !target) return state;
 
+    const sourceBox = state.graph.boxes[source];
+    if (!sourceBox) return state;
 
-  resolveKeyToId: (key, graph) => {
-    if (!key) return null;
-    const match = Object.values(graph.boxes).find((b) => b.key === key);
-    return match ? match.id : null;
-  },
+    const updatedBoxes = { ...state.graph.boxes };
 
-  resolveIdToKey: (id, graph) => {
-    if (!id) return "";
-    return graph.boxes[id]?.key ?? "";
-  },
+    if (sourceBox.kind === "dialogue") {
+      if (sourceHandle === `${source}-default`) {
+        updatedBoxes[source] = { ...sourceBox, defaultNext: target };
+      } else {
+        const choices = sourceBox.choices.map((choice) => {
+          if (`${source}-${choice.id}` === sourceHandle) {
+            return { ...choice, next: target };
+          }
+          return choice;
+        });
+        updatedBoxes[source] = { ...sourceBox, choices };
+      }
+    }
+
+    if (sourceBox.kind === "condition") {
+      if (sourceHandle === `${source}-fallback`) {
+        updatedBoxes[source] = { ...sourceBox, fallback: target };
+      } else {
+        const evaluations = sourceBox.evaluations.map((evalItem) => {
+          if (`${source}-${evalItem.id}` === sourceHandle) {
+            return { ...evalItem, next: target };
+          }
+          return evalItem;
+        });
+        updatedBoxes[source] = { ...sourceBox, evaluations };
+      }
+    }
+
+    return { graph: { ...state.graph, boxes: updatedBoxes } };
+  }),
+
+onEdgesDelete: (deletedEdges) =>
+  set((state) => {
+    const updatedBoxes = { ...state.graph.boxes };
+
+    deletedEdges.forEach((edge) => {
+      const sourceBox = updatedBoxes[edge.source];
+      if (!sourceBox) return;
+
+      if (sourceBox.kind === "dialogue") {
+        if (edge.sourceHandle === `${edge.source}-default`) {
+          updatedBoxes[edge.source] = { ...sourceBox, defaultNext: null };
+        } else {
+          const choices = sourceBox.choices.map((choice) =>
+            `${edge.source}-${choice.id}` === edge.sourceHandle ? { ...choice, next: "" } : choice
+          );
+          updatedBoxes[edge.source] = { ...sourceBox, choices };
+        }
+      }
+
+      if (sourceBox.kind === "condition") {
+        if (edge.sourceHandle === `${edge.source}-fallback`) {
+          updatedBoxes[edge.source] = { ...sourceBox, fallback: "" };
+        } else {
+          const evaluations = sourceBox.evaluations.map((evalItem) =>
+            `${edge.source}-${evalItem.id}` === edge.sourceHandle ? { ...evalItem, next: "" } : evalItem
+          );
+          updatedBoxes[edge.source] = { ...sourceBox, evaluations };
+        }
+      }
+    });
+
+    return { graph: { ...state.graph, boxes: updatedBoxes } };
+  }),
 
   addChoice: (boxId) =>
     set((state) => {
@@ -216,7 +282,6 @@ export const useGraphStore = create<GraphStore>((set) => ({
 
       const newChoiceConditionBox: ChoiceConditionBox = {
         id: conditionId,
-        key: conditionId,
         kind: "choiceCondition",
         parentId: boxId, 
         checks: [],
@@ -398,7 +463,6 @@ export const useGraphStore = create<GraphStore>((set) => ({
       const id = nextId("box");
       const startBox: DialogueBox = {
         id,
-        key: startKey,
         kind: "dialogue",
         speaker: null,
         customSpeakerName: null,
@@ -411,7 +475,7 @@ export const useGraphStore = create<GraphStore>((set) => ({
       return {
         graph: {
           boxes: { [id]: startBox },
-          startBoxId: startBox.key,
+          startBoxId: startBox.id,
         },
       };
   }),

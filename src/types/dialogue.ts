@@ -21,7 +21,6 @@ export interface Choice {
 
 export interface DialogueBox {
   id: string;
-  key: string;
   kind: "dialogue";
   speaker: CharacterDef | null;
   customSpeakerName?: string | null;
@@ -40,13 +39,12 @@ export interface ConditionEvaluation {
   id: string;
   variable: string;
   evaluator: Evaluator;
-  value: string;
+  value: string | number;
   next: string;
 }
 
 export interface ConditionBox {
   id: string;
-  key: string;
   kind: "condition";
   evaluations: ConditionEvaluation[];
   fallback: string;
@@ -62,7 +60,6 @@ export interface VisibilityCheck {
 
 export interface ChoiceConditionBox {
   id: string;
-  key: string;
   kind: "choiceCondition";
   parentId: string;
   checks: VisibilityCheck[]; 
