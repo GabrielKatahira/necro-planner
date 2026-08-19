@@ -1,11 +1,26 @@
 import './App.css'
-import GraphCanvas from './components/GraphCanvas'
+import { useIsMobileDevice } from './hooks/useIsMobileDevice'
+import GraphCanvas from './components/desktop/GraphCanvas'
+import MobileDialogueEditor from './components/mobile/MobileDialogueEditor';
+import { useState } from 'react';
 
 function App() {
+  const isMobileDetected = useIsMobileDevice();
+  const [overrideMode, setOverrideMode] = useState<"desktop" | "mobile" | null>(null);
+  const activeMode = overrideMode ?? (isMobileDetected ? "mobile" : "desktop");
 
   return (
     <div className="app-root">
-      <GraphCanvas />
+      <div className="view-mode-toggle">
+        <button
+          onClick={() => setOverrideMode(activeMode === "mobile" ? "desktop" : "mobile")}
+          className="mode-btn"
+        >
+          Switch to {activeMode === "mobile" ? "Desktop Canvas" : "Mobile Editor"}
+        </button>
+      </div>
+
+      {activeMode === "desktop" ? <GraphCanvas /> : <MobileDialogueEditor />}
     </div>
   )
 }

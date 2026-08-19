@@ -1,8 +1,8 @@
 import { Handle, Position } from "reactflow";
 import { memo, useState, useEffect } from "react";
-import type { DialogueBox } from "../types/dialogue";
-import { Character } from "../types/character";
-import { useGraphStore } from "../store/graphStore";
+import type { DialogueBox } from "../../types/dialogue";
+import { Character } from "../../types/character";
+import { useGraphStore } from "../../store/graphStore";
 import { useShallow } from "zustand/shallow";
 
 interface Props {

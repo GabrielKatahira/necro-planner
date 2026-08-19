@@ -1,7 +1,7 @@
 import { Handle, Position } from "reactflow";
 import { memo, useState, useEffect } from "react";
-import { useGraphStore } from "../store/graphStore";
-import { EVALUATORS, type ConditionBox, type Evaluator } from "../types/dialogue";
+import { useGraphStore } from "../../store/graphStore";
+import { EVALUATORS, type ConditionBox, type Evaluator } from "../../types/dialogue";
 
 interface Props {
   data: { box: ConditionBox };

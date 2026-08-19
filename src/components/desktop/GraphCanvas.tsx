@@ -3,7 +3,7 @@ import ReactFlow from "reactflow";
 import type { Node, Edge, Connection } from "reactflow";
 import { useNodesState } from "reactflow";
 import "reactflow/dist/style.css";
-import { useGraphStore } from "../store/graphStore";
+import { useGraphStore } from "../../store/graphStore";
 import DialogueBox from "./DialogueBox";
 import ConditionBox from "./ConditionBox";
 import ChoiceConditionBox from "./ChoiceConditionBox";
