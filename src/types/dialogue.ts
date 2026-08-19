@@ -15,7 +15,7 @@ export type Evaluator = typeof EVALUATORS[number];
 export interface Choice {
   id: string;
   prompt: string; 
-  next: string;
+  next: string | null;
   choiceConditionId?: string;
 }
 
@@ -40,7 +40,7 @@ export interface ConditionEvaluation {
   variable: string;
   evaluator: Evaluator;
   value: string | number;
-  next: string;
+  next: string | null;
 }
 
 export interface ConditionBox {

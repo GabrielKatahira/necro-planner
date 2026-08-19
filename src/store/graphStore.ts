@@ -3,7 +3,7 @@ import type { DialogueGraph, DialogueBox, Choice, ConditionBox, ConditionEvaluat
 import { starterGraph } from "../data/starterGraph";
 import { loadGraph, saveGraphDebounced } from "./persist";
 import { Character } from "../types/character";
-import type { Edge } from "reactflow";
+import type { Connection, Edge } from "reactflow";
 
 interface GraphStore {
   graph: DialogueGraph;
@@ -34,6 +34,7 @@ interface GraphStore {
   deleteEvaluation: (boxId: string, evaluationId: string) => void;
 
   connectNodes: (connection: { source: string | null; sourceHandle: string | null; target: string | null; targetHandle: string | null }) => void;
+  reconnectNodes: (oldEdge: Edge, newConnection: Connection) => void;
   onEdgesDelete: (edges: Edge[]) => void;
 
   setStartBox: (id: string) => void;
@@ -138,79 +139,144 @@ export const useGraphStore = create<GraphStore>((set) => ({
         },
       },
     })),
-    connectNodes: (connection) =>
-  set((state) => {
-    const { source, sourceHandle, target } = connection;
-    if (!source || !sourceHandle || !target) return state;
+  connectNodes: (connection) =>
+    set((state) => {
+      const { source, sourceHandle, target } = connection;
+      if (!source || !sourceHandle || !target) return state;
 
-    const sourceBox = state.graph.boxes[source];
-    if (!sourceBox) return state;
+      const sourceBox = state.graph.boxes[source];
+      if (!sourceBox) return state;
 
-    const updatedBoxes = { ...state.graph.boxes };
-
-    if (sourceBox.kind === "dialogue") {
-      if (sourceHandle === `${source}-default`) {
-        updatedBoxes[source] = { ...sourceBox, defaultNext: target };
-      } else {
-        const choices = sourceBox.choices.map((choice) => {
-          if (`${source}-${choice.id}` === sourceHandle) {
-            return { ...choice, next: target };
-          }
-          return choice;
-        });
-        updatedBoxes[source] = { ...sourceBox, choices };
-      }
-    }
-
-    if (sourceBox.kind === "condition") {
-      if (sourceHandle === `${source}-fallback`) {
-        updatedBoxes[source] = { ...sourceBox, fallback: target };
-      } else {
-        const evaluations = sourceBox.evaluations.map((evalItem) => {
-          if (`${source}-${evalItem.id}` === sourceHandle) {
-            return { ...evalItem, next: target };
-          }
-          return evalItem;
-        });
-        updatedBoxes[source] = { ...sourceBox, evaluations };
-      }
-    }
-
-    return { graph: { ...state.graph, boxes: updatedBoxes } };
-  }),
-
-onEdgesDelete: (deletedEdges) =>
-  set((state) => {
-    const updatedBoxes = { ...state.graph.boxes };
-
-    deletedEdges.forEach((edge) => {
-      const sourceBox = updatedBoxes[edge.source];
-      if (!sourceBox) return;
+      const updatedBoxes = { ...state.graph.boxes };
 
       if (sourceBox.kind === "dialogue") {
-        if (edge.sourceHandle === `${edge.source}-default`) {
-          updatedBoxes[edge.source] = { ...sourceBox, defaultNext: null };
+        if (sourceHandle === `${source}-default`) {
+          updatedBoxes[source] = { ...sourceBox, defaultNext: target };
         } else {
-          const choices = sourceBox.choices.map((choice) =>
-            `${edge.source}-${choice.id}` === edge.sourceHandle ? { ...choice, next: "" } : choice
-          );
-          updatedBoxes[edge.source] = { ...sourceBox, choices };
+          const choices = sourceBox.choices.map((choice) => {
+            if (`${source}-${choice.id}` === sourceHandle) {
+              return { ...choice, next: target };
+            }
+            return choice;
+          });
+          updatedBoxes[source] = { ...sourceBox, choices };
         }
       }
 
       if (sourceBox.kind === "condition") {
-        if (edge.sourceHandle === `${edge.source}-fallback`) {
-          updatedBoxes[edge.source] = { ...sourceBox, fallback: "" };
+        if (sourceHandle === `${source}-fallback`) {
+          updatedBoxes[source] = { ...sourceBox, fallback: target };
         } else {
-          const evaluations = sourceBox.evaluations.map((evalItem) =>
-            `${edge.source}-${evalItem.id}` === edge.sourceHandle ? { ...evalItem, next: "" } : evalItem
-          );
-          updatedBoxes[edge.source] = { ...sourceBox, evaluations };
+          const evaluations = sourceBox.evaluations.map((evalItem) => {
+            if (`${source}-${evalItem.id}` === sourceHandle) {
+              return { ...evalItem, next: target };
+            }
+            return evalItem;
+          });
+          updatedBoxes[source] = { ...sourceBox, evaluations };
         }
       }
-    });
 
-    return { graph: { ...state.graph, boxes: updatedBoxes } };
+      return { graph: { ...state.graph, boxes: updatedBoxes } };
+    }),
+
+  onEdgesDelete: (deletedEdges) =>
+    set((state) => {
+      const updatedBoxes = { ...state.graph.boxes };
+
+      deletedEdges.forEach((edge) => {
+        const sourceBox = updatedBoxes[edge.source];
+        if (!sourceBox) return;
+
+        if (sourceBox.kind === "dialogue") {
+          if (edge.sourceHandle === `${edge.source}-default`) {
+            updatedBoxes[edge.source] = { ...sourceBox, defaultNext: null };
+          } else {
+            const choices = sourceBox.choices.map((choice) =>
+              `${edge.source}-${choice.id}` === edge.sourceHandle ? { ...choice, next: "" } : choice
+            );
+            updatedBoxes[edge.source] = { ...sourceBox, choices };
+          }
+        }
+
+        if (sourceBox.kind === "condition") {
+          if (edge.sourceHandle === `${edge.source}-fallback`) {
+            updatedBoxes[edge.source] = { ...sourceBox, fallback: "" };
+          } else {
+            const evaluations = sourceBox.evaluations.map((evalItem) =>
+              `${edge.source}-${evalItem.id}` === edge.sourceHandle ? { ...evalItem, next: "" } : evalItem
+            );
+            updatedBoxes[edge.source] = { ...sourceBox, evaluations };
+          }
+        }
+      });
+
+      return { graph: { ...state.graph, boxes: updatedBoxes } };
+    }),
+
+  reconnectNodes: (oldEdge, newConnection) =>
+    set((state) => {
+      const updatedBoxes = { ...state.graph.boxes };
+      const sourceBox = updatedBoxes[oldEdge.source];
+
+      if (sourceBox) {
+        if (sourceBox.kind === "dialogue") {
+          if (oldEdge.sourceHandle === `${oldEdge.source}-default`) {
+            updatedBoxes[oldEdge.source] = { ...sourceBox, defaultNext: null };
+          } else {
+            const choices = sourceBox.choices.map((choice) =>
+              `${oldEdge.source}-${choice.id}` === oldEdge.sourceHandle ? { ...choice, next: "" } : choice
+            );
+            updatedBoxes[oldEdge.source] = { ...sourceBox, choices };
+          }
+        }
+
+        if (sourceBox.kind === "condition") {
+          if (oldEdge.sourceHandle === `${oldEdge.source}-fallback`) {
+            updatedBoxes[oldEdge.source] = { ...sourceBox, fallback: "" };
+          } else {
+            const evaluations = sourceBox.evaluations.map((evalItem) =>
+              `${oldEdge.source}-${evalItem.id}` === oldEdge.sourceHandle ? { ...evalItem, next: "" } : evalItem
+            );
+            updatedBoxes[oldEdge.source] = { ...sourceBox, evaluations };
+          }
+        }
+      }
+
+      if (newConnection.target && newConnection.source && newConnection.sourceHandle) {
+        const targetBox = updatedBoxes[newConnection.target];
+        const newSourceBox = updatedBoxes[newConnection.source];
+
+        if (newSourceBox && targetBox) {
+          if (newSourceBox.kind === "dialogue") {
+            if (newConnection.sourceHandle === `${newConnection.source}-default`) {
+              updatedBoxes[newConnection.source] = { ...newSourceBox, defaultNext: newConnection.target };
+            } else {
+              const choices = newSourceBox.choices.map((choice) =>
+                `${newConnection.source}-${choice.id}` === newConnection.sourceHandle
+                  ? { ...choice, next: newConnection.target }
+                  : choice
+              );
+              updatedBoxes[newConnection.source] = { ...newSourceBox, choices };
+            }
+          }
+
+          if (newSourceBox.kind === "condition") {
+            if (newConnection.sourceHandle === `${newConnection.source}-fallback`) {
+              updatedBoxes[newConnection.source] = { ...newSourceBox, fallback: newConnection.target };
+            } else {
+              const evaluations = newSourceBox.evaluations.map((evalItem) =>
+                `${newConnection.source}-${evalItem.id}` === newConnection.sourceHandle
+                  ? { ...evalItem, next: newConnection.target }
+                  : evalItem
+              );
+              updatedBoxes[newConnection.source] = { ...newSourceBox, evaluations };
+            }
+          }
+        }
+      }
+
+      return { graph: { ...state.graph, boxes: updatedBoxes } };
   }),
 
   addChoice: (boxId) =>

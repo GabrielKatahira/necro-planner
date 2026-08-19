@@ -18,9 +18,33 @@ export default function GraphCanvas() {
 
   const connectNodes = useGraphStore((s) => s.connectNodes);
   const onEdgesDelete = useGraphStore((s) => s.onEdgesDelete);
+  const reconnectNodes = useGraphStore((s) => s.reconnectNodes);
 
   const edgesRef = useRef<Map<string, Edge>>(new Map());
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
+
+  const edgeReconnectSuccessful = useRef(true);
+  const onReconnectStart = useCallback(() => {
+    edgeReconnectSuccessful.current = false;
+  }, []);
+
+  const onReconnect = useCallback(
+    (oldEdge: Edge, newConnection: Connection) => {
+      edgeReconnectSuccessful.current = true;
+      reconnectNodes(oldEdge, newConnection);
+    },
+    [reconnectNodes]
+  );
+
+  const onReconnectEnd = useCallback(
+    (_: MouseEvent | TouchEvent, edge: Edge) => {
+      if (!edgeReconnectSuccessful.current) {
+        onEdgesDelete([edge]);
+      }
+      edgeReconnectSuccessful.current = true;
+    },
+    [onEdgesDelete]
+  );
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -126,6 +150,10 @@ export default function GraphCanvas() {
         onNodesChange={onNodesChange}
         onNodeDragStop={onNodeDragStop}
         onConnect={onConnect}
+        onReconnect={onReconnect}
+        onReconnectStart={onReconnectStart}
+        onReconnectEnd={onReconnectEnd}
+        reconnectRadius={20}
         onEdgesDelete={onEdgesDelete}
         nodeTypes={nodeTypes}
         fitView
