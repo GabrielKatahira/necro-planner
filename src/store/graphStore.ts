@@ -521,18 +521,13 @@ export const useGraphStore = create<GraphStore>((set) => ({
     
   resetGraph: (position) =>
     set(() => {
-      const startKey = window.prompt("Name your starting box key:");
-      if (!startKey) {
-        return { graph: { boxes: {}, startBoxId: null } };
-      }
-
       const id = nextId("box");
       const startBox: DialogueBox = {
         id,
         kind: "dialogue",
         speaker: null,
         customSpeakerName: null,
-        text: "New box",
+        text: "",
         choices: [],
         defaultNext: null,
         position

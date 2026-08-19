@@ -38,6 +38,23 @@ html, body, #root {
   flex-direction: column;
 }
 
+.view-mode-toggle {
+  position: "fixed";
+  top: 10;
+  right: 10;
+  z-index: 9999 
+}
+.view-mode-toggle button {
+  background-color: #2f2f30;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+  padding: 8px 14px;
+}
+
 .toolbar button {
   background: #2f2f30;
   color: white;

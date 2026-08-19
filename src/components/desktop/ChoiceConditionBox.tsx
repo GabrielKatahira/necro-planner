@@ -1,8 +1,8 @@
 import { Handle, Position } from "reactflow";
 import { useState } from "react";
-import { useGraphStore } from "../store/graphStore";
-import type { ChoiceConditionBox, Evaluator } from "../types/dialogue";
-import { EVALUATORS } from "../types/dialogue";
+import { useGraphStore } from "../../store/graphStore";
+import type { ChoiceConditionBox, Evaluator } from "../../types/dialogue";
+import { EVALUATORS } from "../../types/dialogue";
 
 interface Props {
   data: { box: ChoiceConditionBox };
