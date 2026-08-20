@@ -50,23 +50,23 @@ export default function DialogueCard ({box, changeActiveBox, onInitiateConnect} 
         const HORIZONTAL_GAP = 400; 
         const VERTICAL_GAP = 10;   
 
-    return {
-        x: parentBox.position.x + HORIZONTAL_GAP,
-        y: parentBox.position.y + (index * VERTICAL_GAP),
-    };
+        return {
+            x: parentBox.position.x + HORIZONTAL_GAP,
+            y: parentBox.position.y + (index * VERTICAL_GAP),
+        };
     }
     function getNonOverlappingPosition(
-    basePosition: { x: number; y: number }, 
-    existingBoxes: Record<string, { position: { x: number; y: number } }>
+        basePosition: { x: number; y: number }, 
+        existingBoxes: Record<string, { position: { x: number; y: number } }>
     ) {
-    let { x, y } = basePosition;
-    const boxesArray = Object.values(existingBoxes);
+        let { x, y } = basePosition;
+        const boxesArray = Object.values(existingBoxes);
 
-    while (boxesArray.some((b) => Math.abs(b.position.x - x) < 50 && Math.abs(b.position.y - y) < 50)) {
-        y += 180; 
-    }
+        while (boxesArray.some((b) => Math.abs(b.position.x - x) < 50 && Math.abs(b.position.y - y) < 50)) {
+            y += 180; 
+        }
 
-    return { x, y };
+        return { x, y };
     }
 
     return(
@@ -122,75 +122,80 @@ export default function DialogueCard ({box, changeActiveBox, onInitiateConnect} 
                 placeholder="dialogue text..."
                 rows={3}
             />
-            <div className="mobile-label">Choices</div>
-            <div className="mobile-card-list">
-                {box.choices.map((choice) => (
-                    <div key={choice.id} className="choice-row">
-                        <input
-                        className="choice-prompt mobile-text-input"
-                        value={localPrompts[choice.id] ?? choice.prompt}
-                        placeholder="prompt..."
-                        onChange={(e) => {
-                            setLocalPrompts((prev) => ({ ...prev, [choice.id]: e.target.value }));
-                        }}
-                        onBlur={() =>
-                            updateChoice(box.id, choice.id, { prompt: localPrompts[choice.id] ?? choice.prompt })
-                        }
-                        />
-                        {choice.next?(
-                            <button className="mobile-button" onClick={()=>changeActiveBox(choice.next!)}>
-                                ↪
-                            </button>
-                            ):(
-                            <div>
-                                <button className="mobile-button" onClick={()=>{
-                                    const currentChoicesCount = box.choices?.length ?? 0;
-                                    const newPosition = getNewNodePosition(box, currentChoicesCount);
-                                    const newSafePos = getNonOverlappingPosition(newPosition,boxes);
-                                    const newBoxId = addBox("dialogue",newSafePos);
-                                    updateChoice(box.id,choice.id,{next:newBoxId});
-                                    changeActiveBox(newBoxId);
-                                }}>
-                                    &#x1F4AC;&#xFE0E;
+            {(box.defaultNext == null || box.defaultNext.trim() === "") && (
+                <div>
+                    <div className="mobile-label">Choices</div>
+                    <div className="mobile-card-list">
+                        {box.choices.map((choice) => (
+                            <div key={choice.id} className="choice-row">
+                                <input
+                                className="choice-prompt mobile-text-input"
+                                value={localPrompts[choice.id] ?? choice.prompt}
+                                placeholder="prompt..."
+                                onChange={(e) => {
+                                    setLocalPrompts((prev) => ({ ...prev, [choice.id]: e.target.value }));
+                                }}
+                                onBlur={() =>
+                                    updateChoice(box.id, choice.id, { prompt: localPrompts[choice.id] ?? choice.prompt })
+                                }
+                                />
+                                {choice.next?(
+                                    <button className="mobile-button" onClick={()=>changeActiveBox(choice.next!)}>
+                                        ↪
+                                    </button>
+                                    ):(
+                                    <div>
+                                        <button className="mobile-button" onClick={()=>{
+                                            const currentChoicesCount = box.choices?.length ?? 0;
+                                            const newPosition = getNewNodePosition(box, currentChoicesCount);
+                                            const newSafePos = getNonOverlappingPosition(newPosition,boxes);
+                                            const newBoxId = addBox("dialogue",newSafePos);
+                                            updateChoice(box.id,choice.id,{next:newBoxId});
+                                            changeActiveBox(newBoxId);
+                                        }}>
+                                            &#x1F4AC;&#xFE0E;
+                                        </button>
+                                        <button className="mobile-button" onClick={()=>{
+                                            const currentChoicesCount = box.choices?.length ?? 0;
+                                            const newPosition = getNewNodePosition(box, currentChoicesCount);
+                                            const newSafePos = getNonOverlappingPosition(newPosition,boxes);
+                                            const newBoxId = addBox("condition",newSafePos);
+                                            updateChoice(box.id,choice.id,{next:newBoxId});
+                                            changeActiveBox(newBoxId);
+                                        }}>
+                                            🗎
+                                        </button>
+                                        <button className="mobile-button" onClick={()=>{
+                                            onInitiateConnect((id) => {
+                                                updateChoice(box.id,choice.id,{next:id});
+                                            })
+                                        }}>
+                                            ⇔
+                                        </button>
+                                    </div>)
+                                }
+                                
+                                <button
+                                className="mobile-button"
+                                onClick={() => {
+                                    //if (choice.choiceConditionId) deleteChoiceCondition(choice.choiceConditionId);
+                                    deleteChoice(box.id, choice.id);
+                                }}
+                                >
+                                ✕
                                 </button>
-                                <button className="mobile-button" onClick={()=>{
-                                    const currentChoicesCount = box.choices?.length ?? 0;
-                                    const newPosition = getNewNodePosition(box, currentChoicesCount);
-                                    const newSafePos = getNonOverlappingPosition(newPosition,boxes);
-                                    const newBoxId = addBox("condition",newSafePos);
-                                    updateChoice(box.id,choice.id,{next:newBoxId});
-                                    changeActiveBox(newBoxId);
-                                }}>
-                                    🗎
-                                </button>
-                                <button className="mobile-button" onClick={()=>{
-                                    onInitiateConnect((id) => {
-                                        updateChoice(box.id,choice.id,{next:id});
-                                    })
-                                }}>
-                                    ⇔
-                                </button>
-                            </div>)
-                        }
-                        
-                        <button
-                        className="mobile-button"
-                        onClick={() => {
-                            //if (choice.choiceConditionId) deleteChoiceCondition(choice.choiceConditionId);
-                            deleteChoice(box.id, choice.id);
-                        }}
-                        >
-                        ✕
+                            </div>
+                        ))}
+                        </div>
+                        <button 
+                            className="add-item-btn mobile-text-input" 
+                            onClick={() => addChoice(box.id)}
+                            >
+                            + choice
                         </button>
                     </div>
-                ))}
-                <button 
-                    className="add-item-btn mobile-text-input" 
-                    onClick={() => addChoice(box.id)}
-                    disabled={!(box.defaultNext == null || box.defaultNext.trim() == "")}
-                    >
-                    + choice
-                </button>
+                    
+            )}
                 {box.choices.length == 0 && (
                     <div>
                         <div className="mobile-label">Default Next</div>
@@ -233,8 +238,6 @@ export default function DialogueCard ({box, changeActiveBox, onInitiateConnect} 
                     </div>
                 )}
             </div>
-
-        </div>
     )
 
 }

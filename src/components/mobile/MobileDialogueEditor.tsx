@@ -2,6 +2,7 @@ import MobileTreeOverlay from "./MobileTreeOverlay"
 import { useState } from "react"
 import { useGraphStore } from "../../store/graphStore";
 import DialogueCard from "./DialogueCard";
+import ConditionCard from "./ConditionCard";
 
 
 export default function MobileDialogueEditor() {
@@ -48,7 +49,11 @@ export default function MobileDialogueEditor() {
                                     onInitiateConnect={handleOpenMapForConnect}    
                                 />
                             ) : activeBox.kind === "condition" ? (
-                                <div>Condition box</div>
+                                <ConditionCard
+                                    box={activeBox}
+                                    changeActiveBox={(id) => setActiveBoxId(id)}
+                                    onInitiateConnect={handleOpenMapForConnect}
+                                />
                             ) : null 
                             )
                             : (<div>No box selected.</div>)

@@ -359,11 +359,11 @@ html, body, #root {
 @keyframes cardSlideIn {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.98);
+    filter: blur(1.5rem);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    filter: blur(0);
   }
 }
 .mobile-card option {
@@ -385,6 +385,9 @@ html, body, #root {
 .mobile-text-input {
   font-size: 1em;
   margin-bottom: 15px;
+}
+.mobile-bigger-text-input {
+  font-size: 1.4em;
 }
 .mobile-button {
   background-color: #2b1a33;
@@ -408,4 +411,10 @@ html, body, #root {
 }
 .mobile-default-next>button {
   width: 80%;
+}
+.mobile-flex {
+  display: flex;
+}
+.mobile-select {
+  height: 38px !important;
 }
