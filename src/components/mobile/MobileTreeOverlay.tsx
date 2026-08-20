@@ -32,8 +32,7 @@ export default function MobileTreeOverlay({onSelectBox, onClose} : Props) {
             edges={edges}
             nodeTypes={mobileNodeTypes}
             onNodeClick={(_, node) => {
-            onSelectBox(node.id);
-            onClose();
+                onSelectBox(node.id);
             }}
             nodesDraggable={false}
             zoomOnPinch={true}

@@ -55,6 +55,9 @@ export function ConditionTreeNode({data} : ConditionProps) {
                 id={`${box.id}-default`}
             />
             <div className="tree-node-list">
+                {box.evaluations.length == 0 &&(
+                    <div>no choices created</div>
+                )}
                 {box.evaluations.map((evaluation) => (
                     <div key={evaluation.id} className="tree-node-list-item">
                         {evaluation.variable} {evaluation.evaluator} {evaluation.value}
