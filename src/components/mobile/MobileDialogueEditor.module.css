@@ -1,0 +1,37 @@
+.editorRoot {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.showMapBtn {
+  background: var(--bg-btn);
+  color: var(--text-main);
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  transition: background 0.15s ease;
+}
+
+.showMapBtn:hover {
+  background: var(--bg-btn-hover);
+}
+
+.cardWrapper {
+  color: var(--text-main);
+  padding-top: 50px;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.emptyMessage {
+  padding: 20px;
+  color: var(--text-main);
+}

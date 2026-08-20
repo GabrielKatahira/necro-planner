@@ -4,6 +4,7 @@ import type { Node, Edge, Connection } from "reactflow";
 import { useNodesState } from "reactflow";
 import "reactflow/dist/style.css";
 import { useGraphStore } from "../../store/graphStore";
+import styles from "./GraphCanvas.module.css";
 import DialogueBox from "./DialogueBox";
 import ConditionBox from "./ConditionBox";
 import ChoiceConditionBox from "./ChoiceConditionBox";
@@ -143,7 +144,7 @@ export default function GraphCanvas() {
   }, [graph.boxes]);
 
   return (
-    <div className="graph-canvas-wrapper">
+    <div className={styles.canvasWrapper}>
       <ReactFlow
         nodes={nodes}
         edges={edges}

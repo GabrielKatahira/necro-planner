@@ -1,0 +1,129 @@
+.boxNode {
+  width: 370px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid var(--border-card);
+  color: var(--text-main);
+  position: relative;
+}
+
+.selected {
+  border-color: var(--border-card-selected);
+}
+
+.portrait {
+  position: absolute;
+  width: 70px;
+  transform: translate(400%, -120%);
+  opacity: 0.5;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.dropdownSelect {
+  width: 100%;
+  border-radius: 4px;
+  outline: none;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-input);
+  cursor: pointer;
+  height: 100%;
+}
+
+.deleteBtn {
+  background: none;
+  outline: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+.smallBtn {
+  background: none;
+  outline: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+.customSpeakerInput {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-input);
+  outline: none;
+  width: 100%;
+  border-radius: 4px;
+  margin-bottom: 5px;
+}
+
+.textInput {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-input);
+  outline: none;
+  width: 100%;
+  resize: none;
+  border-radius: 4px;
+  font-size: 0.7em;
+  margin-bottom: 0.3em;
+}
+
+.choicesList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.choiceRow {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  position: relative;
+}
+
+.choicePrompt {
+  flex: 1.4;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-input);
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 11px;
+  min-width: 0;
+  outline: none;
+}
+
+.choiceNext {
+  flex: 1;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-input);
+  border-radius: 4px;
+  color: var(--text-green);
+  padding: 4px;
+  font-size: 11px;
+  min-width: 0;
+  outline: none;
+}
+
+.addItemBtn {
+  background-color: var(--bg-btn-accent);
+  outline: none;
+  border: none;
+  width: 100%;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-main);
+}
+
+.defaultNextRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.defaultText {
+  color: var(--text-yellow);
+}

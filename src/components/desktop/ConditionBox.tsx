@@ -2,6 +2,7 @@ import { Handle, Position } from "reactflow";
 import { memo, useState, useEffect } from "react";
 import { useGraphStore } from "../../store/graphStore";
 import { EVALUATORS, type ConditionBox, type Evaluator } from "../../types/dialogue";
+import styles from "./ConditionBox.module.css";
 
 interface Props {
   data: { box: ConditionBox };
@@ -40,7 +41,7 @@ function ConditionBoxNode({ data, selected }: Props) {
   }, [box.evaluations]);
 
   return (
-    <div className={`box-node ${selected ? "selected" : ""}`}>
+    <div className={`${styles.boxNode} ${selected ? styles.selected : ""}`}>
       <Handle
         type="target"
         position={Position.Left}
@@ -48,18 +49,18 @@ function ConditionBoxNode({ data, selected }: Props) {
         isConnectable={true}
       />
 
-      <div className="condition-header">
+      <div className={styles.header}>
         <div>Condition</div>
-        <button className="delete-btn" onClick={() => deleteBox(box.id)} title="Delete box">
+        <button className={styles.deleteBtn} onClick={() => deleteBox(box.id)} title="Delete box">
           ✕
         </button>
       </div>
 
-      <div className="evaluations-list">
+      <div className={styles.evaluationsList}>
         {box.evaluations.map((evaluation) => (
-          <div key={evaluation.id} className="evaluations-row">
+          <div key={evaluation.id} className={styles.evaluationsRow}>
             <input
-              className="text-input nodrag"
+              className={`${styles.textInput} nodrag`}
               value={localVariables[evaluation.id] ?? evaluation.variable}
               placeholder="variable..."
               onChange={(e) => {
@@ -74,7 +75,7 @@ function ConditionBoxNode({ data, selected }: Props) {
 
             <select
               value={evaluation.evaluator}
-              className="dropdown-select eval-select"
+              className={`${styles.evalSelect} ${styles.dropdownSelect ?? ""}`}
               onChange={(e) => {
                 updateEvaluation(box.id, evaluation.id, {
                   evaluator: e.target.value as Evaluator,
@@ -89,21 +90,21 @@ function ConditionBoxNode({ data, selected }: Props) {
             </select>
 
             <input
-            className="text-input eval-value nodrag"
-            value={localValues[evaluation.id] ?? evaluation.value ?? ""}
-            placeholder="value..."
-            onChange={(e) => {
+              className={`${styles.textInput} ${styles.evalValue} nodrag`}
+              value={localValues[evaluation.id] ?? evaluation.value ?? ""}
+              placeholder="value..."
+              onChange={(e) => {
                 setLocalValues((prev) => ({ ...prev, [evaluation.id]: e.target.value }));
-            }}
-            onBlur={() => {
+              }}
+              onBlur={() => {
                 const rawVal = localValues[evaluation.id];
                 const finalVal = rawVal !== undefined ? parseInputValue(String(rawVal)) : evaluation.value;
                 updateEvaluation(box.id, evaluation.id, { value: finalVal });
-            }}
+              }}
             />
 
             <input
-              className="text-input eval-fallback nodrag"
+              className={`${styles.textInput} ${styles.evalFallback} nodrag`}
               value={typeof evaluation.next === "string" ? evaluation.next : ""}
               placeholder="no connection..."
               disabled={true}
@@ -111,7 +112,7 @@ function ConditionBoxNode({ data, selected }: Props) {
             />
 
             <button
-              className="delete-btn"
+              className={styles.deleteBtn}
               onClick={() => deleteEvaluation(box.id, evaluation.id)}
               title="Delete evaluation"
             >
@@ -128,19 +129,19 @@ function ConditionBoxNode({ data, selected }: Props) {
           </div>
         ))}
 
-        <button className="add-item-btn" onClick={() => addEvaluation(box.id)}>
+        <button className={styles.addItemBtn} onClick={() => addEvaluation(box.id)}>
           + evaluation
         </button>
       </div>
 
-      <div className="default-next-row">
+      <div className={styles.defaultNextRow}>
         <label>fallback:</label>
         <input
           value={box.fallback ?? ""}
           placeholder="no connection..."
           disabled={true}
           readOnly
-          className="text-input default-text nodrag"
+          className={`${styles.textInput} ${styles.defaultText} nodrag`}
         />
         <Handle
           type="source"

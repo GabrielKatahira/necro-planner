@@ -1,7 +1,8 @@
 import type { ConditionBox } from "../../types/dialogue";
 import { useGraphStore } from "../../store/graphStore";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 import { EVALUATORS, type Evaluator } from "../../types/dialogue";
+import styles from "./ConditionCard.module.css";
 
 interface Props {
     box: ConditionBox,
@@ -65,10 +66,10 @@ export default function ConditionCard ({box, changeActiveBox, onInitiateConnect}
     }
 
     return(
-        <div className="mobile-card" key={box.id}>
-            <div className="mobile-card-header-wrapper">
-                <div className="mobile-label">Condition</div>
-                <button className="delete-btn mobile-text-input" onClick={() =>{ 
+        <div className={styles.card} key={box.id}>
+            <div className={styles.cardHeader}>
+                <div className={styles.label}>Condition</div>
+                <button className={styles.deleteCardBtn} onClick={() =>{ 
                         if(confirm("Are you sure you want to delete this card?")){
                         deleteBox(box.id)
                         }
@@ -77,12 +78,12 @@ export default function ConditionCard ({box, changeActiveBox, onInitiateConnect}
                 ✕
                 </button>
             </div>
-            <div className="mobile-label">Evaluations</div>
-            <div className="mobile-card-list">
+            <div className={styles.label}>Evaluations</div>
+            <div className={styles.evalList}>
                 {box.evaluations.map((evaluation) => (
-                    <div className="evaluations-row mobile-bigger-text-input" key={evaluation.id}>
+                    <div className={styles.evalRow} key={evaluation.id}>
                         <input
-                            className="text-input nodrag"
+                            className={`${styles.varInput} nodrag`}
                             value={localVariables[evaluation.id] ?? evaluation.variable}
                             placeholder="variable..."
                             onChange={(e) => {
@@ -96,7 +97,7 @@ export default function ConditionCard ({box, changeActiveBox, onInitiateConnect}
                         />
                         <select
                             value={evaluation.evaluator}
-                            className="dropdown-select eval-select mobile-select"
+                            className={styles.evalSelect}
                             onChange={(e) => {
                             updateEvaluation(box.id, evaluation.id, {
                                 evaluator: e.target.value as Evaluator,
@@ -111,7 +112,7 @@ export default function ConditionCard ({box, changeActiveBox, onInitiateConnect}
                         </select>
             
                         <input
-                        className="text-input eval-value nodrag"
+                        className={`${styles.valInput} nodrag`}
                         value={localValues[evaluation.id] ?? evaluation.value ?? ""}
                         placeholder="value..."
                         onChange={(e) => {
@@ -125,12 +126,12 @@ export default function ConditionCard ({box, changeActiveBox, onInitiateConnect}
                         />
 
                         {evaluation.next?(
-                            <button className="mobile-button" onClick={()=>changeActiveBox(evaluation.next!)}>
+                            <button className={styles.actionBtn} onClick={()=>changeActiveBox(evaluation.next!)}>
                                 ↪
                             </button>
                         ) : (
-                            <div className="mobile-flex">
-                                 <button className="mobile-button" onClick={()=>{
+                            <div className={styles.actionGroup}>
+                                 <button className={styles.actionBtn} onClick={()=>{
                                     const currentEvalsCount = box.evaluations?.length ?? 0;
                                     const newPosition = getNewNodePosition(box, currentEvalsCount);
                                     const newSafePos = getNonOverlappingPosition(newPosition,boxes);
@@ -140,7 +141,7 @@ export default function ConditionCard ({box, changeActiveBox, onInitiateConnect}
                                 }}>
                                     &#x1F4AC;&#xFE0E;
                                 </button>
-                                <button className="mobile-button" onClick={()=>{
+                                <button className={styles.actionBtn} onClick={()=>{
                                     const currentEvalsCount = box.evaluations?.length ?? 0;
                                     const newPosition = getNewNodePosition(box, currentEvalsCount);
                                     const newSafePos = getNonOverlappingPosition(newPosition,boxes);
@@ -150,7 +151,7 @@ export default function ConditionCard ({box, changeActiveBox, onInitiateConnect}
                                 }}>
                                     🗎
                                 </button>
-                                <button className="mobile-button" onClick={()=>{
+                                <button className={styles.actionBtn} onClick={()=>{
                                     onInitiateConnect((id) => {
                                         updateEvaluation(box.id,evaluation.id,{next:id});
                                     })
@@ -160,7 +161,7 @@ export default function ConditionCard ({box, changeActiveBox, onInitiateConnect}
                             </div>
                         )}
                         <button
-                        className="mobile-button"
+                        className={styles.actionBtn}
                         onClick={() => {
                             deleteEvaluation(box.id, evaluation.id);
                         }}
@@ -170,21 +171,21 @@ export default function ConditionCard ({box, changeActiveBox, onInitiateConnect}
                     </div>
                 ))}
                 <button
-                    className="add-item-btn mobile-text-input"
+                    className={styles.addEvalBtn}
                     onClick={() => addEvaluation(box.id)}
                 >
                     + evaluation
                 </button>
             </div>
             <div>
-                <div className="mobile-label">Fallback</div>
-                {box.fallback?(
-                    <button className="mobile-button mobile-default-next" onClick={()=>changeActiveBox(box.fallback!)}>
+                <div className={styles.label}>Fallback</div>
+                {box.fallback ? (
+                    <button className={styles.fallbackBtn} onClick={() => changeActiveBox(box.fallback!)}>
                         ↪
                     </button>
-                ):(
-                    <div className="mobile-default-next">
-                        <button className="mobile-button" onClick={()=>{
+                ) : (
+                    <div className={styles.fallbackActions}>
+                        <button onClick={() => {
                             const currentEvalsCount = box.evaluations?.length ?? 0;
                             const newPosition = getNewNodePosition(box, currentEvalsCount);
                             const newSafePos = getNonOverlappingPosition(newPosition,boxes);
@@ -194,7 +195,7 @@ export default function ConditionCard ({box, changeActiveBox, onInitiateConnect}
                         }}>
                             &#x1F4AC;&#xFE0E;
                         </button>
-                        <button className="mobile-button" onClick={()=>{
+                        <button onClick={() => {
                             const currentEvalsCount = box.evaluations?.length ?? 0;
                             const newPosition = getNewNodePosition(box, currentEvalsCount);
                             const newSafePos = getNonOverlappingPosition(newPosition,boxes);
@@ -204,7 +205,7 @@ export default function ConditionCard ({box, changeActiveBox, onInitiateConnect}
                         }}>
                             🗎
                         </button>
-                        <button className="mobile-button" onClick={()=>{
+                        <button onClick={() => {
                             onInitiateConnect((id) => {
                                 updateBox("condition",box.id,{fallback:id})
                             })

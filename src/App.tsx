@@ -1,4 +1,4 @@
-import './App.css'
+import styles from './App.module.css'
 import { useIsMobileDevice } from './hooks/useIsMobileDevice'
 import GraphCanvas from './components/desktop/GraphCanvas'
 import MobileDialogueEditor from './components/mobile/MobileDialogueEditor';
@@ -10,11 +10,11 @@ function App() {
   const activeMode = overrideMode ?? (isMobileDetected ? "mobile" : "desktop");
 
   return (
-    <div className="app-root">
-      <div className="view-mode-toggle">
+    <div className={styles.appRoot}>
+      <div className={styles.viewModeToggle}>
         <button
           onClick={() => setOverrideMode(activeMode === "mobile" ? "desktop" : "mobile")}
-          className="mode-btn"
+          className={styles.modeBtn}
         >
           Switch to {activeMode === "mobile" ? "Desktop Canvas" : "Mobile Editor"}
         </button>

@@ -1,7 +1,8 @@
 import { useReactFlow } from "reactflow";
 import { useGraphStore } from "../../store/graphStore";
 import { useRef } from "react";
-import { exportGraphAsFile,importGraphFromFile } from "../../store/persist";
+import { exportGraphAsFile, importGraphFromFile } from "../../store/persist";
+import styles from "./Toolbar.module.css";
 
 export default function Toolbar() {
   const { screenToFlowPosition } = useReactFlow();
@@ -15,12 +16,12 @@ export default function Toolbar() {
 
   return (
     <>
-      <div className="toolbar">
-        <button onClick={() => addBox("dialogue",centerOfScreen())}>+ Add Dialogue Box</button>
-        <button onClick={() => addBox("condition",centerOfScreen())}>+ Add Condition Box</button>
+      <div className={styles.toolbar}>
+        <button className={styles.toolBtn} onClick={() => addBox("dialogue", centerOfScreen())}>+ Add Dialogue Box</button>
+        <button className={styles.toolBtn} onClick={() => addBox("condition", centerOfScreen())}>+ Add Condition Box</button>
       </div>
-      <div className="jsonbar">
-        <button onClick={() => exportGraphAsFile(graph)}>Export JSON</button>
+      <div className={styles.jsonbar}>
+        <button className={styles.toolBtn} onClick={() => exportGraphAsFile(graph)}>Export JSON</button>
         <input
           type="file"
           accept=".json"
@@ -33,8 +34,8 @@ export default function Toolbar() {
             useGraphStore.setState({ graph: imported });
           }}
         />
-        <button onClick={() => fileInputRef.current?.click()}>Import JSON</button>
-        <button onClick={() => {
+        <button className={styles.toolBtn} onClick={() => fileInputRef.current?.click()}>Import JSON</button>
+        <button className={styles.toolBtn} onClick={() => {
           if (confirm("Clear the current graph? Export first if you want to keep it.")) {
             resetGraph(centerOfScreen());
           }

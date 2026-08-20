@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { useGraphStore } from "../../store/graphStore";
 import { getAutoLayoutedElements } from "../../utils/autoLayout";
 import { ConditionTreeNode, DialogueTreeNode } from "./MobileTreeNodes";
+import styles from "./MobileTreeOverlay.module.css";
 
 const mobileNodeTypes = {
     dialogueBox: DialogueTreeNode,
@@ -22,8 +23,8 @@ export default function MobileTreeOverlay({onSelectBox, onClose} : Props) {
     }, [graph]);
 
     return (
-        <div className="mobile-tree-modal" style={{ width: "100vw", height: "100vh" }}>
-        <button className="close-tree-btn" onClick={onClose} style={{ position: "absolute", zIndex: 10 , top: "12px", left:"12px"}}>
+        <div className={styles.treeModal}>
+        <button className={styles.closeTreeBtn} onClick={onClose}>
             ✕ Close Map
         </button>
 
