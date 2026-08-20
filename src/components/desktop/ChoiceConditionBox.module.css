@@ -65,4 +65,9 @@
   cursor: pointer;
   color: var(--text-main);
   margin-top: 4px;
+  transition: background 0.15s ease;
+}
+
+.addItemBtn:hover {
+  background-color: var(--bg-btn-accent-hover);
 }

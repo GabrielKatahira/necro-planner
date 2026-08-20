@@ -52,7 +52,8 @@
 
 .speakerWrapper img {
   width: 15vw;
-  max-width: 70px;
+  height: 15vw;
+  object-fit: cover;
   border-radius: 4px;
 }
 
@@ -64,8 +65,8 @@
   border: 1px solid var(--border-input);
   cursor: pointer;
   font-size: 1em;
+  height: 15vw;
   min-height: 15vw;
-  height: auto;
   padding: 6px;
 }
 
@@ -134,6 +135,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.actionBtn:hover {
+  background-color: var(--bg-btn-accent-hover);
 }
 
 .actionGroup {
@@ -153,6 +159,11 @@
   margin-top: 5px;
   margin-bottom: 15px;
   color: var(--text-main);
+  transition: background 0.15s ease;
+}
+
+.addChoiceBtn:hover {
+  background-color: var(--bg-btn-accent-hover);
 }
 
 .defaultNextBtn {
@@ -173,7 +184,7 @@
 }
 
 .defaultNextBtn:hover {
-  background-color: var(--border-card-selected);
+  background-color: var(--bg-btn-accent-hover);
 }
 
 .defaultNextActions {
@@ -200,5 +211,5 @@
 }
 
 .defaultNextActions button:hover {
-  background-color: var(--border-card-selected);
+  background-color: var(--bg-btn-accent-hover);
 }
