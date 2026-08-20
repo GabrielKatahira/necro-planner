@@ -1,0 +1,92 @@
+.boxNode {
+  width: 370px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid var(--border-card);
+  color: var(--text-main);
+}
+
+.selected {
+  border-color: var(--border-card-selected);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.deleteBtn {
+  background: none;
+  outline: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+.evaluationsList {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.evaluationsRow {
+  width: 100%;
+  display: flex;
+  position: relative;
+  margin: 5px 0;
+  gap: 4px;
+  align-items: center;
+}
+
+.textInput {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-input);
+  outline: none;
+  width: 100%;
+  resize: none;
+  border-radius: 4px;
+  font-size: 0.7em;
+  padding: 4px;
+}
+
+.evalSelect {
+  width: 30%;
+  border-radius: 4px;
+  outline: none;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-input);
+  cursor: pointer;
+  height: 100%;
+}
+
+.evalValue {
+  width: 50%;
+}
+
+.evalFallback {
+  color: var(--text-green);
+}
+
+.addItemBtn {
+  background-color: var(--bg-btn-accent);
+  outline: none;
+  border: none;
+  width: 100%;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-main);
+  margin-top: 4px;
+}
+
+.defaultNextRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 6px;
+}
+
+.defaultText {
+  color: var(--text-yellow);
+}

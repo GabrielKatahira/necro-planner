@@ -4,6 +4,7 @@ import type { DialogueBox } from "../../types/dialogue";
 import { Character } from "../../types/character";
 import { useGraphStore } from "../../store/graphStore";
 import { useShallow } from "zustand/shallow";
+import styles from "./DialogueBox.module.css";
 
 interface Props {
   data: { box: DialogueBox };
@@ -11,7 +12,7 @@ interface Props {
   id: string;
 }
 
-function dialogueBox({ data, selected }: Props) {
+function DialogueBoxNode({ data, selected }: Props) {
   const { box } = data;
 
   const {
@@ -63,21 +64,21 @@ function dialogueBox({ data, selected }: Props) {
   }
 
   return (
-    <div className={`box-node ${selected ? "selected" : ""}`}>
+    <div className={`${styles.boxNode} ${selected ? styles.selected : ""}`}>
       <Handle type="target" position={Position.Left} id={`${box.id}-default`} isConnectable={true} />
 
       {box.speaker?.portrait && (
-        <img src={box.speaker.portrait} className="dialogue-box-portrait" key={box.speaker.portrait} />
+        <img src={box.speaker.portrait} className={styles.portrait} key={box.speaker.portrait} />
       )}
 
-      <div className="dialogue-node-header">
+      <div className={styles.header}>
         <select
           value={box.speaker?.id ?? ""}
           onChange={(e) => {
             const found = Object.values(Character).find((c) => c.id === e.target.value);
             updateBox("dialogue", box.id, { speaker: found ?? null });
           }}
-          className="dropdown-select"
+          className={styles.dropdownSelect}
         >
           {Object.values(Character).map((c) => (
             <option key={c.id} value={c.id}>
@@ -86,14 +87,14 @@ function dialogueBox({ data, selected }: Props) {
           ))}
         </select>
 
-        <button className="delete-btn" onClick={() => deleteBox(box.id)} title="Delete box">
+        <button className={styles.deleteBtn} onClick={() => deleteBox(box.id)} title="Delete box">
           ✕
         </button>
       </div>
 
       {box.speaker?.id === Character.CUSTOM.id && (
         <input
-          className="custom-speaker-input nodrag"
+          className={`${styles.customSpeakerInput} nodrag`}
           value={localCustomName}
           placeholder="enter name..."
           onChange={(e) => setLocalCustomName(e.target.value)}
@@ -102,7 +103,7 @@ function dialogueBox({ data, selected }: Props) {
       )}
 
       <textarea
-        className="text-input nodrag"
+        className={`${styles.textInput} nodrag`}
         value={localText}
         onChange={(e) => setLocalText(e.target.value)}
         onBlur={() => updateBox("dialogue", box.id, { text: localText })}
@@ -110,9 +111,9 @@ function dialogueBox({ data, selected }: Props) {
         rows={3}
       />
 
-      <div className="choices-list">
+      <div className={styles.choicesList}>
         {box.choices.map((choice, index) => (
-          <div key={choice.id} className="choice-row">
+          <div key={choice.id} className={styles.choiceRow}>
             <Handle
               type="target"
               position={Position.Left}
@@ -121,7 +122,7 @@ function dialogueBox({ data, selected }: Props) {
               style={{ top: "50%", transform: "translateY(-50%)", opacity: 0}}
             />
             <input
-              className="choice-prompt nodrag"
+              className={`${styles.choicePrompt} nodrag`}
               value={localPrompts[choice.id] ?? choice.prompt}
               placeholder="prompt..."
               onChange={(e) => {
@@ -132,24 +133,26 @@ function dialogueBox({ data, selected }: Props) {
               }
             />
             <input
-              className="choice-next nodrag"
+              className={`${styles.choiceNext} nodrag`}
               value={typeof choice.next === "string" ? choice.next : ""}
               placeholder="no connection..."
               disabled={true}
               readOnly
             />
             <button
-              className="delete-btn small"
+              className={styles.smallBtn}
               onClick={() => {
-                choice.choiceConditionId
-                  ? deleteChoiceCondition(choice.choiceConditionId)
-                  : addChoiceCondition(box.id, choice.id, { x: -220, y: 100 + index * 30 });
+                if (choice.choiceConditionId) {
+                  deleteChoiceCondition(choice.choiceConditionId);
+                } else {
+                  addChoiceCondition(box.id, choice.id, { x: -220, y: 100 + index * 30 });
+                }
               }}
             >
               ?
             </button>
             <button
-              className="delete-btn small"
+              className={styles.smallBtn}
               onClick={() => {
                 if (choice.choiceConditionId) deleteChoiceCondition(choice.choiceConditionId);
                 deleteChoice(box.id, choice.id);
@@ -166,19 +169,19 @@ function dialogueBox({ data, selected }: Props) {
             />
           </div>
         ))}
-        <button className="add-item-btn" onClick={() => addChoice(box.id)}>
+        <button className={styles.addItemBtn} onClick={() => addChoice(box.id)}>
           + choice
         </button>
       </div>
 
-      <div className="default-next-row">
+      <div className={styles.defaultNextRow}>
         <label>default next:</label>
         <input
           value={box.defaultNext ?? ""}
           disabled={true}
           readOnly
           placeholder="no connection..."
-          className="text-input default-text nodrag"
+          className={`${styles.textInput} ${styles.defaultText} nodrag`}
         />
         <Handle
           type="source"
@@ -192,7 +195,7 @@ function dialogueBox({ data, selected }: Props) {
   );
 }
 
-export default memo(dialogueBox, (prev, next) => {
+export default memo(DialogueBoxNode, (prev, next) => {
   return (
     prev.selected === next.selected &&
     prev.id === next.id &&

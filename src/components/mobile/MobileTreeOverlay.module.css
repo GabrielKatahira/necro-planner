@@ -1,0 +1,25 @@
+.treeModal {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
+
+.closeTreeBtn {
+  background: var(--bg-btn);
+  color: var(--text-main);
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+  position: absolute;
+  z-index: 10;
+  top: 12px;
+  left: 12px;
+  transition: background 0.15s ease;
+}
+
+.closeTreeBtn:hover {
+  background: var(--bg-btn-hover);
+}

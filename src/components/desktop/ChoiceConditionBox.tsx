@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useGraphStore } from "../../store/graphStore";
 import type { ChoiceConditionBox, Evaluator } from "../../types/dialogue";
 import { EVALUATORS } from "../../types/dialogue";
+import styles from "./ChoiceConditionBox.module.css";
 
 interface Props {
   data: { box: ChoiceConditionBox };
@@ -10,7 +11,7 @@ interface Props {
   id: string;
 }
 
-export default function choiceConditionBox({data, selected} : Props) {
+export default function ChoiceConditionBoxNode({data, selected} : Props) {
     const { box } = data;
 
     const addCheck = useGraphStore((s) => s.addChoiceConditionCheck);
@@ -30,7 +31,7 @@ export default function choiceConditionBox({data, selected} : Props) {
     
 
     return(
-        <div className={`box-node ${selected ? "selected" : ""} choice-cond-box`}>
+        <div className={`${styles.boxNode} ${selected ? styles.selected : ""}`}>
             <Handle
                 type="source"
                 position={Position.Right}
@@ -38,11 +39,11 @@ export default function choiceConditionBox({data, selected} : Props) {
                 isConnectable={false}
                 style={{opacity:0}}
             />
-            <div className={`choice-condition-checks-wrapper`}>
+            <div className={styles.checksWrapper}>
                 {box.checks.map((check, index) => (
-                    <div className="choice-condition-check" key={`${check.id}`}>
+                    <div className={styles.checkRow} key={`${check.id}`}>
                         <input
-                            className="text-input nodrag"
+                            className={`${styles.textInput} nodrag`}
                             defaultValue={localChecks[index]?.variable ?? ""}
                             key={`variable-${check.id}`}
                             onChange={(e) => {
@@ -54,16 +55,16 @@ export default function choiceConditionBox({data, selected} : Props) {
                             placeholder="variable..."
                         />
                         <select value={check.evaluator}
-                                className="dropdown-select eval-select"
+                                className={styles.evalSelect}
                                 onChange={(e) => {
                                     updateCheck(box.id,check.id, {evaluator: e.target.value as Evaluator})
                                     }}>
                             {EVALUATORS.map((obj) => (
-                                <option value={obj}>{obj}</option>
+                                <option key={obj} value={obj}>{obj}</option>
                             ))}
                         </select>
                         <input
-                            className="text-input eval-value nodrag"
+                            className={`${styles.textInput} ${styles.evalValue} nodrag`}
                             defaultValue={localChecks[index]?.value ?? ""}
                             key={`value-${check.id}`}
                             onChange={(e) => {
@@ -74,12 +75,12 @@ export default function choiceConditionBox({data, selected} : Props) {
                             onBlur={() => updateCheck(box.id, check.id, { value: localChecks[index]?.value ?? "" })}
                             placeholder="value..."
                         />
-                        <button className="delete-btn" onClick={()=>deleteCheck(box.id,check.id)}>
+                        <button className={styles.deleteBtn} onClick={()=>deleteCheck(box.id,check.id)}>
                             ✕
                         </button>
                     </div>
                 ))}
-                <button className="add-item-btn" onClick={() => addCheck(box.id)}>+</button>
+                <button className={styles.addItemBtn} onClick={() => addCheck(box.id)}>+</button>
             </div>
         </div>
     )
