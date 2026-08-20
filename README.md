@@ -6,7 +6,7 @@ works on mobile and desktop (including mobile phones on top of desks)
 
 allows for json exporting and importing
 
-made for personal use 
+made for personal use (but feel free to use it yourself)
 
 featuring OC portraits made on picrew by [@4sisteR_Atelier](https://x.com/4sisteR_Atelier)
 
