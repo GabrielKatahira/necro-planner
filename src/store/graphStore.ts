@@ -114,10 +114,37 @@ export const useGraphStore = create<GraphStore>((set) => ({
     set((state) => {
       const boxes = { ...state.graph.boxes };
       delete boxes[id];
-      Object.keys(boxes).forEach((key) => {
-        const box = boxes[key];
+      Object.keys(boxes).forEach((boxId) => {
+        const box = boxes[boxId];
+
+        if (box.kind === "dialogue") {
+          const nextDefault = box.defaultNext === id ? null : box.defaultNext;
+          const updatedChoices = box.choices?.map((choice) => ({
+            ...choice,
+            next: choice.next === id ? null : choice.next
+          }));
+          boxes[boxId] = {
+            ...box,
+            defaultNext: nextDefault,
+            ...(updatedChoices && {choices : updatedChoices})
+          }
+        }
+
+        if (box.kind === "condition") {
+          const nextFallback = box.fallback === id ? "" : box.fallback;
+          const updatedEvals = box.evaluations?.map((evaluation) => ({
+            ...evaluation,
+            next: evaluation.next === id ? null : evaluation.next
+          }));
+          boxes[boxId] = {
+            ...box,
+            fallback: nextFallback,
+            ...(updatedEvals && {evaluations:updatedEvals})
+          }
+        }
+
         if (box.kind === "choiceCondition" && box.parentId === id) {
-          delete boxes[key];
+          delete boxes[boxId];
         }
       });
       return {

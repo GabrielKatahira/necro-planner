@@ -354,6 +354,17 @@ html, body, #root {
   border: 1px solid #2b1a33;
   color: #fff;
   box-sizing: border-box;
+  animation: cardSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes cardSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 .mobile-card option {
   font-size: 1em !important;
@@ -380,7 +391,7 @@ html, body, #root {
   outline: none;
   border: none;
   padding: 5px;
-  width: 8%;
+  width: 8vw;
   border-radius: 6px;
   cursor: pointer;
   font-size: 1em;
@@ -389,4 +400,12 @@ html, body, #root {
   width: 100%;
   display:flex;
   justify-content: space-between;
+}
+.mobile-default-next {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+.mobile-default-next>button {
+  width: 80%;
 }
