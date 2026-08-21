@@ -11,6 +11,8 @@ export const Character = {
   KUROSACHI: { id: "KUROSACHI", displayName: "Kurosachi", portrait: "portraits/kurosachi.png" },
   PRISCI: { id: "PRISCI", displayName: "Prisci", portrait: "portraits/prisci.png" },
   TOKI: { id: "TOKI", displayName: "Toki", portrait: "portraits/toki.png" },
+  AYAKA: { id: "AYAKA", displayName: "Ayaka", portrait: "portraits/ayaka.png" },
+  SAYOKO: { id: "SAYOKO", displayName: "Sayoko", portrait: "portraits/sayoko.png" },
 } as const satisfies Record<string, CharacterDef>;
 
 export type CharacterId = keyof typeof Character;
