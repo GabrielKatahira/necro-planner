@@ -1,0 +1,85 @@
+.fields {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.compact {
+  font-size: 0.75em;
+}
+
+.variableInput,
+.valueInput {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-input);
+  outline: none;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border-radius: 4px;
+  font-size: 1em;
+  padding: 4px;
+}
+
+.evalSelect {
+  border-radius: 4px;
+  outline: none;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-input);
+  cursor: pointer;
+  font-size: 1em;
+  padding: 3px;
+}
+
+.customRow,
+.sliderRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.valueInput {
+  flex: 1;
+}
+
+.slider {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.readout {
+  min-width: 3.5em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.list {
+  position: fixed;
+  z-index: 10000;
+  margin: 0;
+  padding: 2px;
+  list-style: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 6px;
+  color: var(--text-main);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.option {
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.option:hover {
+  background-color: var(--bg-btn-accent-hover);
+}
+
+.customOption {
+  font-style: italic;
+}

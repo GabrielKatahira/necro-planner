@@ -68,6 +68,8 @@
 
 .evalFallback {
   color: var(--text-green);
+  width: 35%;
+  flex-shrink: 0;
 }
 
 .addItemBtn {

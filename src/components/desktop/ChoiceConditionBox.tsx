@@ -1,8 +1,7 @@
 import { Handle, Position } from "reactflow";
-import { useState } from "react";
 import { useGraphStore } from "../../store/graphStore";
-import type { ChoiceConditionBox, Evaluator } from "../../types/dialogue";
-import { EVALUATORS } from "../../types/dialogue";
+import type { ChoiceConditionBox, VisibilityCheck } from "../../types/dialogue";
+import ConditionFields from "../shared/ConditionFields";
 import styles from "./ChoiceConditionBox.module.css";
 
 interface Props {
@@ -19,17 +18,6 @@ export default function ChoiceConditionBoxNode({data, selected} : Props) {
     const deleteCheck = useGraphStore((s) => s.deleteChoiceConditionCheck);
 
 
-    const [localChecks, setLocalChecks] = useState(
-        box.checks.map((c) => ({ 
-            id: c.id, 
-            variable: c.variable, 
-            evaluator: typeof c.evaluator === "string" ? c.evaluator : "==" ,
-            value: typeof c.value === "number" ? c.value : "0"
-        }))
-    );
-        
-    
-
     return(
         <div className={`${styles.boxNode} ${selected ? styles.selected : ""}`}>
             <Handle
@@ -40,40 +28,15 @@ export default function ChoiceConditionBoxNode({data, selected} : Props) {
                 style={{opacity:0}}
             />
             <div className={styles.checksWrapper}>
-                {box.checks.map((check, index) => (
+                {box.checks.map((check) => (
                     <div className={styles.checkRow} key={`${check.id}`}>
-                        <input
-                            className={`${styles.textInput} nodrag`}
-                            defaultValue={localChecks[index]?.variable ?? ""}
-                            key={`variable-${check.id}`}
-                            onChange={(e) => {
-                                const next = [...localChecks];
-                                next[index] = { ...next[index], variable: e.target.value };
-                                setLocalChecks(next);
-                            }}
-                            onBlur={() => updateCheck(box.id, check.id, { variable: localChecks[index]?.variable ?? "" })}
-                            placeholder="variable..."
-                        />
-                        <select value={check.evaluator}
-                                className={styles.evalSelect}
-                                onChange={(e) => {
-                                    updateCheck(box.id,check.id, {evaluator: e.target.value as Evaluator})
-                                    }}>
-                            {EVALUATORS.map((obj) => (
-                                <option key={obj} value={obj}>{obj}</option>
-                            ))}
-                        </select>
-                        <input
-                            className={`${styles.textInput} ${styles.evalValue} nodrag`}
-                            defaultValue={localChecks[index]?.value ?? ""}
-                            key={`value-${check.id}`}
-                            onChange={(e) => {
-                                const next = [...localChecks];
-                                next[index] = { ...next[index], value: e.target.value };
-                                setLocalChecks(next);
-                            }}
-                            onBlur={() => updateCheck(box.id, check.id, { value: localChecks[index]?.value ?? "" })}
-                            placeholder="value..."
+                        <ConditionFields
+                            compact
+                            stringValues
+                            variable={check.variable}
+                            evaluator={check.evaluator}
+                            value={check.value}
+                            onChange={(patch) => updateCheck(box.id, check.id, patch as Partial<VisibilityCheck>)}
                         />
                         <button className={styles.deleteBtn} onClick={()=>deleteCheck(box.id,check.id)}>
                             ✕
