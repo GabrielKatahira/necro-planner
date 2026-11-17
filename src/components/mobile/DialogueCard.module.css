@@ -104,6 +104,16 @@
   margin-bottom: 10px;
 }
 
+.choiceItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.activeBtn {
+  outline: 2px solid var(--text-main);
+}
+
 .choiceRow {
   display: flex;
   gap: 6px;

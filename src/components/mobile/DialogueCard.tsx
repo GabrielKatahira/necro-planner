@@ -2,6 +2,7 @@ import type { DialogueBox } from "../../types/dialogue";
 import { Character } from "../../types/character";
 import { useGraphStore } from "../../store/graphStore";
 import { useState, useEffect } from "react";
+import ChoiceConditionEditor from "./ChoiceConditionEditor";
 import styles from "./DialogueCard.module.css";
 
 interface Props {
@@ -18,6 +19,8 @@ export default function DialogueCard ({box, changeActiveBox, onInitiateConnect} 
     const addChoice = useGraphStore((s) => s.addChoice);
     const updateChoice = useGraphStore((s) => s.updateChoice);
     const deleteChoice = useGraphStore((s) => s.deleteChoice);
+    const addChoiceCondition = useGraphStore((s) => s.addChoiceCondition);
+    const deleteChoiceCondition = useGraphStore((s) => s.deleteChoiceCondition);
     const boxes = useGraphStore((s) => s.graph.boxes);
 
     const [localText, setLocalText] = useState(box.text);
@@ -128,7 +131,8 @@ export default function DialogueCard ({box, changeActiveBox, onInitiateConnect} 
                     <div className={styles.label}>Choices</div>
                     <div className={styles.choicesList}>
                         {box.choices.map((choice) => (
-                            <div key={choice.id} className={styles.choiceRow}>
+                            <div key={choice.id} className={styles.choiceItem}>
+                            <div className={styles.choiceRow}>
                                 <input
                                 className={styles.choicePrompt}
                                 value={localPrompts[choice.id] ?? choice.prompt}
@@ -175,15 +179,35 @@ export default function DialogueCard ({box, changeActiveBox, onInitiateConnect} 
                                         </button>
                                     </div>)
                                 }
-                                
+                                <button
+                                className={`${styles.actionBtn} ${choice.choiceConditionId ? styles.activeBtn : ""}`}
+                                onClick={() => {
+                                    if (choice.choiceConditionId) {
+                                        deleteChoiceCondition(choice.choiceConditionId);
+                                    } else {
+                                        const index = box.choices.findIndex((c) => c.id === choice.id);
+                                        addChoiceCondition(box.id, choice.id, {
+                                            x: box.position.x - 220,
+                                            y: box.position.y + 100 + index * 30,
+                                        });
+                                    }
+                                }}
+                                >
+                                ?
+                                </button>
                                 <button
                                 className={styles.actionBtn}
                                 onClick={() => {
+                                    if (choice.choiceConditionId) deleteChoiceCondition(choice.choiceConditionId);
                                     deleteChoice(box.id, choice.id);
                                 }}
                                 >
                                 ✕
                                 </button>
+                            </div>
+                            {choice.choiceConditionId && (
+                                <ChoiceConditionEditor conditionId={choice.choiceConditionId} />
+                            )}
                             </div>
                         ))}
                         </div>

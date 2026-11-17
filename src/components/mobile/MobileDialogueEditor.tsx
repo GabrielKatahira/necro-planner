@@ -27,7 +27,15 @@ export default function MobileDialogueEditor() {
         }
     };
     const handleCloseMap = () => {
-        setOnConnectTargetPicked(null); 
+        setOnConnectTargetPicked(null);
+        setShowingMap(false);
+    };
+    const handleCreateBox = (kind: "dialogue" | "condition") => {
+        const { addBox, setStartBox, graph } = useGraphStore.getState();
+        const newBoxId = addBox(kind, { x: 0, y: 0 });
+        if (!graph.startBoxId) setStartBox(newBoxId);
+        setOnConnectTargetPicked(null);
+        setActiveBoxId(newBoxId);
         setShowingMap(false);
     };
 
@@ -36,7 +44,8 @@ export default function MobileDialogueEditor() {
             {showingMap ? (
                 <MobileTreeOverlay 
                     onClose={handleCloseMap} 
-                    onSelectBox={handleBoxSelectionFromMap}/>
+                    onSelectBox={handleBoxSelectionFromMap}
+                    onCreateBox={handleCreateBox}/>
             ) : (
                 <div>
                     <button onClick={() => setShowingMap(true)} className={styles.showMapBtn}>◯ Show Map</button>
@@ -56,7 +65,17 @@ export default function MobileDialogueEditor() {
                                 />
                             ) : null 
                         ) : (
-                            <div className={styles.emptyMessage}>No box selected.</div>
+                            <div className={styles.emptyMessage}>
+                                <p>No box selected.</p>
+                                <div className={styles.createActions}>
+                                    <button className={styles.createBtn} onClick={() => handleCreateBox("dialogue")}>
+                                        + Dialogue Box
+                                    </button>
+                                    <button className={styles.createBtn} onClick={() => handleCreateBox("condition")}>
+                                        + Condition Box
+                                    </button>
+                                </div>
+                            </div>
                         )}
                     </div>
                 </div>
