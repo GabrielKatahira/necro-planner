@@ -1,7 +1,8 @@
 import { Handle, Position } from "reactflow";
 import { memo, useState, useEffect } from "react";
 import type { DialogueBox } from "../../types/dialogue";
-import { Character } from "../../types/character";
+import SpeakerSelect from "../shared/SpeakerSelect";
+import { SPEAKER_CUSTOM } from "../../utils/speakers";
 import { useGraphStore } from "../../store/graphStore";
 import { useShallow } from "zustand/shallow";
 import styles from "./DialogueBox.module.css";
@@ -50,49 +51,23 @@ function DialogueBoxNode({ data, selected }: Props) {
     setLocalPrompts(promptMap);
   }, [box.choices]);
 
-  type CharacterInstance = typeof Character[keyof typeof Character];
-
-  function getName(c: CharacterInstance) {
-    switch (c) {
-      case Character.CUSTOM:
-        return "Custom";
-      case Character.NARRATOR:
-        return "Narrator";
-      default:
-        return c.displayName;
-    }
-  }
-
   return (
     <div className={`${styles.boxNode} ${selected ? styles.selected : ""}`}>
       <Handle type="target" position={Position.Left} id={`${box.id}-default`} isConnectable={true} />
 
-      {box.speaker?.portrait && (
-        <img src={box.speaker.portrait} className={styles.portrait} key={box.speaker.portrait} />
-      )}
-
       <div className={styles.header}>
-        <select
-          value={box.speaker?.id ?? ""}
-          onChange={(e) => {
-            const found = Object.values(Character).find((c) => c.id === e.target.value);
-            updateBox("dialogue", box.id, { speaker: found ?? null });
-          }}
+        <SpeakerSelect
+          value={box.speakerId}
+          onChange={(speakerId) => updateBox("dialogue", box.id, { speakerId })}
           className={styles.dropdownSelect}
-        >
-          {Object.values(Character).map((c) => (
-            <option key={c.id} value={c.id}>
-              {getName(c)}
-            </option>
-          ))}
-        </select>
+        />
 
         <button className={styles.deleteBtn} onClick={() => deleteBox(box.id)} title="Delete box">
           ✕
         </button>
       </div>
 
-      {box.speaker?.id === Character.CUSTOM.id && (
+      {box.speakerId === SPEAKER_CUSTOM && (
         <input
           className={`${styles.customSpeakerInput} nodrag`}
           value={localCustomName}

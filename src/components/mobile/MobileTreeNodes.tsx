@@ -1,5 +1,7 @@
 import { Handle, Position } from "reactflow";
 import type { DialogueBox, ConditionBox } from "../../types/dialogue";
+import { useCharacterStore } from "../../store/characterStore";
+import { SPEAKER_NARRATOR, speakerDisplayName } from "../../utils/speakers";
 import styles from "./MobileTreeNodes.module.css";
 
 interface DialogueProps {
@@ -14,12 +16,13 @@ interface ConditionProps {
 
 export function DialogueTreeNode({ data }: DialogueProps) {
     const {box} = data;
+    const sheets = useCharacterStore((s) => s.board.sheets);
 
     return (
         <div className={styles.treeNode}>
             <Handle type="target" position={Position.Left} id={`${box.id}-default`}/>
-                <div className={styles.title}>{box.speaker?.id=="CUSTOM" ? box.customSpeakerName : box.speaker?.displayName}</div>
-                <div className={`${styles.text} ${box.speaker?.id=="NARRATOR" ? styles.italics : ""}`}>
+                <div className={styles.title}>{speakerDisplayName(box.speakerId, box.customSpeakerName, sheets)}</div>
+                <div className={`${styles.text} ${box.speakerId === SPEAKER_NARRATOR ? styles.italics : ""}`}>
                     {box.text ? `${box.text.slice(0,30)}${box.text.length > 30 ? "..." : ""}` : "no text specified..."}
                 </div>
                 <div className={styles.list}>
