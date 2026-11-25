@@ -2,7 +2,7 @@ import { create } from "zustand";
 import type { DialogueGraph, DialogueBox, Choice, ConditionBox, ConditionEvaluation, NodeMapping, ChoiceConditionBox, VisibilityCheck } from "../types/dialogue";
 import { starterGraph } from "../data/starterGraph";
 import { loadGraph, saveGraphDebounced } from "./persist";
-import { Character } from "../types/character";
+import { SPEAKER_NARRATOR } from "../utils/speakers";
 import type { Connection, Edge } from "reactflow";
 
 interface GraphStore {
@@ -57,7 +57,7 @@ export const useGraphStore = create<GraphStore>((set) => ({
               ...state.graph.boxes,
               [id]: {
                 id,
-                speaker: Character.NARRATOR,
+                speakerId: SPEAKER_NARRATOR,
                 kind:"dialogue",
                 text: "",
                 choices: [],
@@ -552,7 +552,7 @@ export const useGraphStore = create<GraphStore>((set) => ({
       const startBox: DialogueBox = {
         id,
         kind: "dialogue",
-        speaker: null,
+        speakerId: null,
         customSpeakerName: null,
         text: "",
         choices: [],

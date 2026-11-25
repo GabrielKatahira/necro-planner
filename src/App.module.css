@@ -26,3 +26,18 @@
 .modeBtn:hover {
   background: var(--bg-btn-hover);
 }
+
+.appModeTabs {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  gap: 4px;
+}
+
+.modeBtnActive {
+  background: var(--bg-btn-accent);
+  outline: 1px solid var(--border-card-selected);
+}

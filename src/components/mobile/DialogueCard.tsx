@@ -1,5 +1,6 @@
 import type { DialogueBox } from "../../types/dialogue";
-import { Character } from "../../types/character";
+import SpeakerSelect from "../shared/SpeakerSelect";
+import { SPEAKER_CUSTOM } from "../../utils/speakers";
 import { useGraphStore } from "../../store/graphStore";
 import { useState, useEffect } from "react";
 import ChoiceConditionEditor from "./ChoiceConditionEditor";
@@ -36,19 +37,6 @@ export default function DialogueCard ({box, changeActiveBox, onInitiateConnect} 
         });
         setLocalPrompts(promptMap);
     }, [box.choices]);
-
-    type CharacterInstance = typeof Character[keyof typeof Character];
-
-    function getName(c: CharacterInstance) {
-        switch (c) {
-          case Character.CUSTOM:
-            return "Custom";
-          case Character.NARRATOR:
-            return "Narrator";
-          default:
-            return c.displayName;
-        }
-    }
 
     function getNewNodePosition(parentBox: { position: { x: number; y: number }; choices?: any[] }, index = 0) {
         const HORIZONTAL_GAP = 400; 
@@ -87,25 +75,13 @@ export default function DialogueCard ({box, changeActiveBox, onInitiateConnect} 
                 </button>
             </div>
             <div className={styles.speakerWrapper}>
-                <select
-                value={box.speaker?.id ?? ""}
-                onChange={(e) => {
-                    const found = Object.values(Character).find((c) => c.id === e.target.value);
-                    updateBox("dialogue", box.id, { speaker: found ?? null });
-                }}
-                className={styles.speakerSelect}
-                >
-                {Object.values(Character).map((c) => (
-                    <option key={c.id} value={c.id}>
-                    {getName(c)}
-                    </option>
-                ))}
-                </select>
-                {box.speaker?.portrait && (
-                    <img src={box.speaker.portrait} alt="Speaker portrait" />
-                )}
+                <SpeakerSelect
+                    value={box.speakerId}
+                    onChange={(speakerId) => updateBox("dialogue", box.id, { speakerId })}
+                    className={styles.speakerSelect}
+                />
             </div>
-            {box.speaker?.id === Character.CUSTOM.id && (
+            {box.speakerId === SPEAKER_CUSTOM && (
                 <div>
                     <div className={styles.label}>Custom Speaker Name</div>
                     <input

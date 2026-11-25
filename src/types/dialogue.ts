@@ -1,6 +1,4 @@
 
-import type { CharacterDef } from "./character";
-
 export const EVALUATORS = [
   "==",
   "!=",
@@ -22,7 +20,8 @@ export interface Choice {
 export interface DialogueBox {
   id: string;
   kind: "dialogue";
-  speaker: CharacterDef | null;
+  // "NARRATOR", "CUSTOM", or the id of a character sheet.
+  speakerId: string | null;
   customSpeakerName?: string | null;
   text: string;
   choices: Choice[]; 
